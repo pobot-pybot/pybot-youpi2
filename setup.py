@@ -1,9 +1,18 @@
 from setuptools import setup, find_packages
-from git_version import git_version
+from setuptools.command.install import install
+
+# from git_version import git_version
+
+
+class PastInstallCommand(install):
+    def run(self):
+        super(PastInstallCommand, self).run()
 
 setup(
     name='pybot-youpi2',
-    version=git_version(),
+    # version=git_version(),
+    use_scm_version=True,
+    setup_requires=['setuptools_scm'],
     namespace_packages=['pybot'],
     packages=find_packages("src"),
     package_dir={'': 'src'},
@@ -17,7 +26,7 @@ setup(
     entry_points={
         'console_scripts': [
             'youpi2-demo = pybot.youpi2.demo:main',
-            'youpi2-ctrl = pybot.youpi2.control_panel:main'
+            'youpi2-ctrl = pybot.youpi2.toplevel:main'
         ]
     }
 )
