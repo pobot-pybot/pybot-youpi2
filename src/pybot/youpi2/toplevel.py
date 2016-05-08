@@ -136,7 +136,7 @@ class ControlPanel(object):
                 '1': ('Reset', self.reset_youpi),
                 '3': ('Shutdown', self.shutdown),
                 '7': ('About', self.display_about_modal),
-                '9': ('Main menu', self.exit_from_level)
+                '9': ('Back', self.exit_from_level)
             },
             lcd=self.lcd
         )
@@ -158,11 +158,35 @@ class ControlPanel(object):
         time.sleep(2)
 
     def shutdown(self):
+        panel = MenuPanel(
+            title='Shutdown',
+            choices={
+                '1': ('Quit', self.quit),
+                '3': ('Reboot', self.reboot),
+                '7': ('Power off', self.power_off),
+                '9': ('Back', self.exit_from_level)
+            },
+            lcd=self.lcd
+        )
+
+        while not self.terminated:
+            panel.display()
+            panel.get_and_process_input()
+
+        self.terminated = self.shutdown_started
+
+    def quit(self):
+        self.terminated = self.shutdown_started = True
+
+    def reboot(self):
+        self.lcd.clear()
+        self.lcd.center_text_at("Reboot in progress...", 2)
+        subprocess.call('sudo reboot', shell=True)
+
+    def power_off(self):
         self.lcd.clear()
         self.lcd.center_text_at("Shutdown in progress...", 2)
-
-        time.sleep(2)
-        self.terminated = self.shutdown_started = True
+        subprocess.call('sudo poweroff', shell=True)
 
 
 def main():
