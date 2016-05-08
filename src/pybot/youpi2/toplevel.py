@@ -79,6 +79,13 @@ class ControlPanel(object):
 
         time.sleep(delay)
 
+    def _wait_for_any_key(self):
+        while True:
+            keys = self.lcd.get_keys()
+            if keys:
+                break
+            time.sleep(0.2)
+
     def run(self):
         self.init_lcd_display()
         self.display_about()
@@ -142,7 +149,7 @@ class ControlPanel(object):
 
     def display_about_modal(self):
         self.display_about(delay=0)
-        self.lcd.get_keys()
+        self._wait_for_any_key()
 
     def reset_youpi(self):
         self.lcd.clear()
