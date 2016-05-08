@@ -6,6 +6,8 @@ import subprocess
 from pybot.lcd.lcd_i2c import LCD03
 from pybot.raspi import i2c_bus
 
+from .__version__ import version
+
 __author__ = 'Eric Pascual'
 
 
@@ -65,10 +67,21 @@ class ControlPanel(object):
         self.terminated = False
         self.shutdown_started = False
 
-    def run(self):
+    def init_lcd_display(self):
         self.lcd.clear()
         self.lcd.set_backlight(True)
         self.lcd.set_cursor_type(LCD03.CT_INVISIBLE)
+
+    def display_about(self, delay=2):
+        self.lcd.clear()
+        self.lcd.center_text_at("Youpi Control", 1)
+        self.lcd.center_text_at("version " + version.split('+')[0], 3)
+
+        time.sleep(delay)
+
+    def run(self):
+        self.init_lcd_display()
+        self.display_about()
 
         panel = MenuPanel(
             title='Main menu',
@@ -115,6 +128,7 @@ class ControlPanel(object):
             choices={
                 '1': ('Reset', self.reset_youpi),
                 '3': ('Shutdown', self.shutdown),
+                '7': ('About', self.display_about_modal),
                 '9': ('Main menu', self.exit_from_level)
             },
             lcd=self.lcd
@@ -125,6 +139,10 @@ class ControlPanel(object):
             panel.get_and_process_input()
 
         self.terminated = self.shutdown_started
+
+    def display_about_modal(self):
+        self.display_about(delay=0)
+        self.lcd.get_keys()
 
     def reset_youpi(self):
         self.lcd.clear()
