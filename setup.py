@@ -1,31 +1,11 @@
 from setuptools import setup, find_packages
-from setuptools.command.install import install
-from setuptools_scm import get_version
-
-from textwrap import dedent
-
-
-class CustomInstallCommand(install):
-    def run(self):
-        # create the version file
-        with file('src/pybot/youpi2/__version__.py', 'w') as fp:
-            fp.write(dedent('''
-                # generated automatically by setup
-                # DO NOT MODIFY
-                version = "%s"
-                ''').lstrip() % get_version())
-
-        install.run(self)
-
 
 setup(
     name='pybot-youpi2',
-    cmdclass={
-        'install': CustomInstallCommand
-    },
-    # version=git_version(),
-    use_scm_version=True,
     setup_requires=['setuptools_scm'],
+    use_scm_version={
+        'write_to': 'src/pybot/youpi2/__version__.py'
+    },
     namespace_packages=['pybot'],
     packages=find_packages("src"),
     package_dir={'': 'src'},
