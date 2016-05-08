@@ -2,14 +2,18 @@ from setuptools import setup, find_packages
 from setuptools.command.install import install
 from setuptools_scm import get_version
 
-# from git_version import git_version
+from textwrap import dedent
 
 
 class CustomInstallCommand(install):
     def run(self):
         # create the version file
         with file('src/pybot/youpi2/__version__.py', 'w') as fp:
-            fp.write('# generated automatically by setup\nversion = "%s"' % get_version())
+            fp.write(dedent('''
+                # generated automatically by setup
+                # DO NOT MODIFY
+                version = "%s"
+                ''').lstrip() % get_version())
 
         install.run(self)
 
