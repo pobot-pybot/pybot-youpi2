@@ -1,15 +1,24 @@
 from setuptools import setup, find_packages
 from setuptools.command.install import install
+from setuptools_scm import get_version
 
 # from git_version import git_version
 
 
-class PastInstallCommand(install):
+class CustomInstallCommand(install):
     def run(self):
-        super(PastInstallCommand, self).run()
+        # create the version file
+        with file('src/pybot/youpi2/__version__.py', 'w') as fp:
+            fp.write('# generated automatically by setup\nversion = "%s"' % get_version())
+
+        install.run(self)
+
 
 setup(
     name='pybot-youpi2',
+    cmdclass={
+        'install': CustomInstallCommand
+    },
     # version=git_version(),
     use_scm_version=True,
     setup_requires=['setuptools_scm'],
