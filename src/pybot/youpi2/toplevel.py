@@ -3,10 +3,10 @@
 import time
 import subprocess
 
-from pybot.lcd.lcd_i2c import LCD03
 from pybot.raspi import i2c_bus
 
 from .__version__ import version
+from .panel import LCDPanel
 
 __author__ = 'Eric Pascual'
 
@@ -63,14 +63,14 @@ class MenuPanel(object):
 
 class ControlPanel(object):
     def __init__(self):
-        self.lcd = LCD03(i2c_bus)
+        self.lcd = LCDPanel(i2c_bus)
         self.terminated = False
         self.shutdown_started = False
 
     def init_lcd_display(self):
         self.lcd.clear()
         self.lcd.set_backlight(True)
-        self.lcd.set_cursor_type(LCD03.CT_INVISIBLE)
+        self.lcd.set_cursor_type(LCDPanel.CT_INVISIBLE)
 
     def display_about(self, delay=2):
         self.lcd.clear()
@@ -93,10 +93,10 @@ class ControlPanel(object):
         panel = MenuPanel(
             title='Main menu',
             choices={
-                '1': ('Demo', self.demo_auto),
-                '3': ('WS mode', self.web_service),
-                '7': ('Man. ctrl', self.manual_control),
-                '9': ('Tools', self.tools),
+                LCDPanel.TL_KEY: ('Demo', self.demo_auto),
+                LCDPanel.TR_KEY: ('WS mode', self.web_service),
+                LCDPanel.BL_KEY: ('Man. ctrl', self.manual_control),
+                LCDPanel.BR_KEY: ('Tools', self.tools),
             },
             lcd=self.lcd
         )
@@ -114,11 +114,21 @@ class ControlPanel(object):
         self.lcd.center_text_at(" Automatic demo ", 1, '=')
         self.lcd.center_text_at("Hit a key to end", 4)
 
+        leds = []
+
         while True:
             keys = self.lcd.get_keys()
             if keys:
                 break
             time.sleep(0.2)
+
+            if leds:
+                leds = []
+            else:
+                leds = [LCDPanel.TL_KEY]
+            self.lcd.set_leds(leds)
+
+        self.lcd.set_leds()
 
     def web_service(self):
         pass
@@ -133,10 +143,10 @@ class ControlPanel(object):
         panel = MenuPanel(
             title='Tools',
             choices={
-                '1': ('Reset', self.reset_youpi),
-                '3': ('Shutdown', self.shutdown),
-                '7': ('About', self.display_about_modal),
-                '9': ('Back', self.exit_from_level)
+                LCDPanel.TL_KEY: ('Reset', self.reset_youpi),
+                LCDPanel.TR_KEY: ('Shutdown', self.shutdown),
+                LCDPanel.BL_KEY: ('About', self.display_about_modal),
+                LCDPanel.BR_KEY: ('Back', self.exit_from_level)
             },
             lcd=self.lcd
         )
@@ -161,10 +171,10 @@ class ControlPanel(object):
         panel = MenuPanel(
             title='Shutdown',
             choices={
-                '1': ('Quit', self.quit),
-                '3': ('Reboot', self.reboot),
-                '7': ('Power off', self.power_off),
-                '9': ('Back', self.exit_from_level)
+                LCDPanel.TL_KEY: ('Quit', self.quit),
+                LCDPanel.TR_KEY: ('Reboot', self.reboot),
+                LCDPanel.BL_KEY: ('Power off', self.power_off),
+                LCDPanel.BR_KEY: ('Back', self.exit_from_level)
             },
             lcd=self.lcd
         )
