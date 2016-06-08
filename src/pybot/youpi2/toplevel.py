@@ -130,7 +130,7 @@ class ControlPanel(object):
             now = time.time()
             if now - clock >= 1:
                 progress = (progress + 1) % len(sequence)
-                self.lcd.set_leds(sequence[progress])
+                self.lcd.set_leds([sequence[progress]])
                 clock = now
 
         self.lcd.set_leds()
