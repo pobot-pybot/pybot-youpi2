@@ -11,6 +11,9 @@ from .panel import LCDPanel
 __author__ = 'Eric Pascual'
 
 
+KEYPAD_SCAN_PERIOD = 0.1
+
+
 class MenuPanel(object):
     MENU_POSITIONS = {
         '1': (1, 1),
@@ -59,7 +62,7 @@ class MenuPanel(object):
                         func()
                         break
 
-            time.sleep(0.2)
+            time.sleep(KEYPAD_SCAN_PERIOD)
 
 
 class ControlPanel(object):
@@ -85,7 +88,7 @@ class ControlPanel(object):
             keys = self.lcd.get_keys()
             if keys:
                 break
-            time.sleep(0.2)
+            time.sleep(KEYPAD_SCAN_PERIOD)
 
     def run(self):
         self.init_lcd_display()
@@ -125,7 +128,7 @@ class ControlPanel(object):
             keys = self.lcd.get_keys()
             if keys:
                 break
-            time.sleep(0.1)
+            time.sleep(KEYPAD_SCAN_PERIOD)
 
             now = time.time()
             if now - clock >= .5:
