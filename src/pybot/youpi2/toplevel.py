@@ -40,6 +40,7 @@ class MenuPanel(object):
             else:
                 s = label + '>'
                 self.lcd.write_at(s, line, col - len(s) + 1)
+        self.lcd.set_leds(self.choices.keys())
 
     def get_and_process_input(self):
         last_keys = []
@@ -112,6 +113,7 @@ class ControlPanel(object):
 
         self.lcd.set_backlight(False)
         self.lcd.clear()
+        self.lcd.set_leds()
 
     def demo_auto(self):
         self.lcd.clear()
