@@ -115,19 +115,23 @@ class ControlPanel(object):
         self.lcd.center_text_at(" Automatic demo ", 1, '=')
         self.lcd.center_text_at("Hit a key to end", 4)
 
-        leds = []
+        sequence = '1254'
+        progress = 0
+
+        clock = 0
+        self.lcd.set_leds(sequence[progress])
 
         while True:
             keys = self.lcd.get_keys()
             if keys:
                 break
-            time.sleep(0.2)
+            time.sleep(0.1)
 
-            if leds:
-                leds = []
-            else:
-                leds = [LCDPanel.TL_KEY]
-            self.lcd.set_leds(leds)
+            now = time.time()
+            if now - clock >= 1:
+                progress = (progress + 1) % len(sequence)
+                self.lcd.set_leds(sequence[progress])
+                clock = now
 
         self.lcd.set_leds()
 
