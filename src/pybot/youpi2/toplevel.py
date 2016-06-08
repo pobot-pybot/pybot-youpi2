@@ -13,10 +13,10 @@ __author__ = 'Eric Pascual'
 
 class MenuPanel(object):
     MENU_POSITIONS = {
-        '1': (2, 1),
-        '7': (4, 1),
-        '3': (2, 20),
-        '9': (4, 20),
+        '1': (1, 1),
+        '4': (4, 1),
+        '2': (1, 20),
+        '5': (4, 20),
     }
 
     def __init__(self, title, choices, lcd):
@@ -26,15 +26,16 @@ class MenuPanel(object):
 
     def display(self):
         self.lcd.clear()
-        self.lcd.center_text_at(' ' + self.title + ' ', 1, '=')
+        self.lcd.center_text_at(self.title, 2)
+        self.lcd.center_text_at('-' * len(self.title), 3)
 
         for key, entry in self.choices.iteritems():
             line, col = self.MENU_POSITIONS[key]
             label = entry[0]
             if col == 1:
-                self.lcd.write_at('>' + label, line, col)
+                self.lcd.write_at('< ' + label, line, col)
             else:
-                s = label + '<'
+                s = label + ' >'
                 self.lcd.write_at(s, line, col - len(s) + 1)
 
     def get_and_process_input(self):
@@ -188,14 +189,17 @@ class ControlPanel(object):
     def quit(self):
         self.terminated = self.shutdown_started = True
 
-    def reboot(self):
+    def in_progress(self, msg):
         self.lcd.clear()
-        self.lcd.center_text_at("Reboot in progress...", 2)
+        self.lcd.center_text_at(msg, 2)
+        self.lcd.center_text_at("in progress...", 3)
+
+    def reboot(self):
+        self.in_progress("Reboot")
         subprocess.call('sudo reboot', shell=True)
 
     def power_off(self):
-        self.lcd.clear()
-        self.lcd.center_text_at("Shutdown in progress...", 2)
+        self.in_progress("Shutdown")
         subprocess.call('sudo poweroff', shell=True)
 
 
