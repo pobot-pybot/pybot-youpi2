@@ -33,9 +33,9 @@ class MenuPanel(object):
             line, col = self.MENU_POSITIONS[key]
             label = entry[0]
             if col == 1:
-                self.lcd.write_at('< ' + label, line, col)
+                self.lcd.write_at('<' + label, line, col)
             else:
-                s = label + ' >'
+                s = label + '>'
                 self.lcd.write_at(s, line, col - len(s) + 1)
 
     def get_and_process_input(self):
