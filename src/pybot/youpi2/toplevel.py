@@ -29,6 +29,7 @@ class MenuPanel(object):
 
     def display(self):
         self.lcd.clear()
+        self.lcd.set_leds()
         self.lcd.center_text_at(self.title, 2)
         self.lcd.center_text_at('-' * len(self.title), 3)
 
