@@ -61,6 +61,7 @@ class MenuPanel(object):
 
                 else:
                     if func:
+                        self.lcd.set_leds()
                         func()
                         break
 
@@ -201,6 +202,7 @@ class ControlPanel(object):
 
     def in_progress(self, msg):
         self.lcd.clear()
+        self.lcd.set_leds()
         self.lcd.center_text_at(msg, 2)
         self.lcd.center_text_at("in progress...", 3)
 
