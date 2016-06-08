@@ -128,9 +128,9 @@ class ControlPanel(object):
             time.sleep(0.1)
 
             now = time.time()
-            if now - clock >= 1:
+            if now - clock >= .5:
                 progress = (progress + 1) % len(sequence)
-                self.lcd.set_leds([sequence[progress]])
+                self.lcd.set_leds(sequence[progress])
                 clock = now
 
         self.lcd.set_leds()

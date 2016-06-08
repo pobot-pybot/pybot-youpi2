@@ -19,10 +19,7 @@ class LCDPanel(LCD05):
 
     def set_leds(self, keys=None):
         if keys:
-            self._bus.write_byte_data(
-                self.EXPANDER_ADDR,
-                0,
-                ~reduce(lambda x, y: x | y, ['1245'.index(k) for k in keys])
-            )
+            data = ~reduce(lambda x, y: x | y, [1 << '1245'.index(k) for k in keys]) & 0xff
+            self._bus.write_byte_data(self.EXPANDER_ADDR, 0, data)
         else:
             self._bus.write_byte_data(self.EXPANDER_ADDR, 0, 0x0f)
