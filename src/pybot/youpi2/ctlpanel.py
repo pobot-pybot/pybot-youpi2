@@ -56,6 +56,7 @@ class ControlPanel(LCD05):
             self.wait_for_key()
 
     def display_progress(self, msg):
+        self.clear()
         self.leds_off()
         self.center_text_at(msg, 2)
         self.center_text_at("in progress...", 3)
