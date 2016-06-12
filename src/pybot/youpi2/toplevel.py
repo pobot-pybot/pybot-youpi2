@@ -186,6 +186,7 @@ class TopLevel(object):
             press a button.
         """)
         self.pnl.wait_for_key()
+        self.pnl.leds_off()
         self.pnl.display_splash("Resetting Youpi...")
 
     def disable_youpi(self):
