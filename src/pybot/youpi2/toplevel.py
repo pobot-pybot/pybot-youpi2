@@ -63,7 +63,7 @@ class TopLevel(object):
             sel.display()
             action = sel.handle_choice()
             if action == Selector.ESC:
-                return action
+                return
 
     def demo_auto(self):
         self.pnl.display_splash("""
@@ -107,7 +107,7 @@ class TopLevel(object):
             sel.display()
             action = sel.handle_choice()
             if action == Selector.ESC:
-                return action
+                return
 
     def web_services(self):
         self.pnl.leds_off()
