@@ -162,7 +162,8 @@ class TopLevel(object):
             title='System',
             choices=(
                 ('About', self.display_about_modal),
-                ('Reset', self.reset_youpi),
+                ('Reset Youpi', self.reset_youpi),
+                ('Disable Youpi', self.disable_youpi),
                 ('Shutdown', self.shutdown),
             ),
             panel=self.pnl
@@ -180,6 +181,12 @@ class TopLevel(object):
     def reset_youpi(self):
         self.pnl.clear()
         self.pnl.center_text_at("Resetting Youpi...", 2)
+
+        time.sleep(2)
+
+    def disable_youpi(self):
+        self.pnl.clear()
+        self.pnl.center_text_at("Youpi motors disabled", 2)
 
         time.sleep(2)
 
