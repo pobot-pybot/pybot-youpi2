@@ -50,7 +50,7 @@ class TopLevel(object):
 
     def mode_selector(self):
         sel = Selector(
-            title='Mode selection',
+            title='Select mode',
             choices=(
                 ('Demo', self.demo_auto),
                 ('Manual', self.manual_control),

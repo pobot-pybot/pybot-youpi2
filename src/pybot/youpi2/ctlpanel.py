@@ -134,7 +134,7 @@ class Selector(object):
     def display(self):
         self.panel.clear()
         self.panel.leds_off()
-        self.panel.center_text_at(self.title, line=3)
+        self.panel.center_text_at(self.title, line=2)
         l = "Esc"
         l += "OK".rjust(self.panel.width - len(l), " ")
         self.panel.write_at(l, line=1)
