@@ -2,145 +2,120 @@
 
 import time
 import subprocess
+from inspect import isfunction
 
 from pybot.raspi import i2c_bus
 
 from .__version__ import version
-from .panel import LCDPanel
+from .ctlpanel import ControlPanel
 
 __author__ = 'Eric Pascual'
 
 
-KEYPAD_SCAN_PERIOD = 0.1
-
-
-class MenuPanel(object):
+class Menu(object):
     MENU_POSITIONS = {
-        '1': (1, 1),
-        '4': (4, 1),
-        '2': (1, 20),
-        '5': (4, 20),
+        ControlPanel.Keys.TL: (1, 1),
+        ControlPanel.Keys.BL: (4, 1),
+        ControlPanel.Keys.TR: (1, 20),
+        ControlPanel.Keys.BR: (4, 20),
     }
 
-    def __init__(self, title, choices, lcd):
+    BACK = -1
+
+    def __init__(self, title, choices, panel):
         self.title = title
         self.choices = choices
-        self.lcd = lcd
+        self.panel = panel
 
     def display(self):
-        self.lcd.clear()
-        self.lcd.set_leds()
-        self.lcd.center_text_at(self.title, 2)
-        self.lcd.center_text_at('-' * len(self.title), 3)
+        self.panel.clear()
+        self.panel.set_leds()
+        self.panel.center_text_at(self.title, 2)
+        self.panel.center_text_at('-' * len(self.title), 3)
 
         for key, entry in self.choices.iteritems():
             line, col = self.MENU_POSITIONS[key]
             label = entry[0]
             if col == 1:
-                self.lcd.write_at('<' + label, line, col)
+                self.panel.write_at('<' + label, line, col)
             else:
                 s = label + '>'
-                self.lcd.write_at(s, line, col - len(s) + 1)
-        self.lcd.set_leds(self.choices.keys())
+                self.panel.write_at(s, line, col - len(s) + 1)
+        self.panel.set_leds(self.choices.keys())
 
     def get_and_process_input(self):
-        last_keys = []
-        func = None
-
-        while True:
-            keys = self.lcd.get_keys()
-            if keys != last_keys:
-                if keys:
-                    try:
-                        key = keys[0]
-                        func = self.choices[key][1]
-                    except KeyError:
-                        pass
-
-                    last_keys = keys
-
-                else:
-                    if func:
-                        self.lcd.set_leds()
-                        func()
-                        break
-
-            time.sleep(KEYPAD_SCAN_PERIOD)
+        key = self.panel.wait_for_key(valid=self.choices.keys())
+        self.panel.leds_off()
+        action = self.choices[key][1]
+        return action() if isfunction(action) else action
 
 
-class ControlPanel(object):
+class TopLevel(object):
+    TERMINATE = -1
+
     def __init__(self):
-        self.lcd = LCDPanel(i2c_bus)
+        self.pnl = ControlPanel(i2c_bus)
         self.terminated = False
-        self.shutdown_started = False
 
-    def init_lcd_display(self):
-        self.lcd.clear()
-        self.lcd.set_backlight(True)
-        self.lcd.set_cursor_type(LCDPanel.CT_INVISIBLE)
+    def display_about(self):
+        self.pnl.display_splash("""
+        Youpi Control
 
-    def display_about(self, delay=2):
-        self.lcd.clear()
-        self.lcd.center_text_at("Youpi Control", 1)
-        self.lcd.center_text_at("version " + version.split('+')[0], 3)
-
-        time.sleep(delay)
-
-    def _wait_for_any_key(self):
-        while True:
-            keys = self.lcd.get_keys()
-            if keys:
-                break
-            time.sleep(KEYPAD_SCAN_PERIOD)
+        version %(version)s
+        """ % {
+            'version': version.split('+')[0]
+        }, delay=2)
 
     def run(self):
-        self.init_lcd_display()
+        self.pnl.reset()
         self.display_about()
 
-        panel = MenuPanel(
+        menu = Menu(
             title='Main menu',
             choices={
-                LCDPanel.TL_KEY: ('Demo', self.demo_auto),
-                LCDPanel.TR_KEY: ('WS mode', self.web_service),
-                LCDPanel.BL_KEY: ('Man. ctrl', self.manual_control),
-                LCDPanel.BR_KEY: ('Tools', self.tools),
+                ControlPanel.Keys.TL: ('Demo', self.demo_auto),
+                ControlPanel.Keys.TR: ('WS mode', self.web_service),
+                ControlPanel.Keys.BL: ('Man. ctrl', self.manual_control),
+                ControlPanel.Keys.BR: ('Tools', self.tools),
             },
-            lcd=self.lcd
+            panel=self.pnl
         )
 
-        self.terminated = False
-        while not self.terminated:
-            panel.display()
-            panel.get_and_process_input()
+        terminated = False
+        while not terminated:
+            menu.display()
+            terminated = menu.get_and_process_input() == self.TERMINATE
 
-        self.lcd.set_backlight(False)
-        self.lcd.clear()
-        self.lcd.set_leds()
+        self.pnl.set_backlight(False)
+        self.pnl.clear()
+        self.pnl.set_leds()
 
     def demo_auto(self):
-        self.lcd.clear()
-        self.lcd.center_text_at(" Automatic demo ", 1, '=')
-        self.lcd.center_text_at("Hit a key to end", 4)
+        self.pnl.display_splash("""
+        Automatic demo
 
-        sequence = '1254'
+        Hit a key to end
+        """, delay=0)
+
+        sequence = self.pnl.Keys.ALL
         progress = 0
 
         clock = 0
-        self.lcd.set_leds(sequence[progress])
+        self.pnl.set_leds(sequence[progress])
 
         while True:
-            keys = self.lcd.get_keys()
+            keys = self.pnl.get_keys()
             if keys:
                 break
-            time.sleep(KEYPAD_SCAN_PERIOD)
+            time.sleep(0.1)
 
             now = time.time()
             if now - clock >= .5:
                 progress = (progress + 1) % len(sequence)
-                self.lcd.set_leds(sequence[progress])
+                self.pnl.set_leds(sequence[progress])
                 clock = now
 
-        self.lcd.set_leds()
+        self.pnl.set_leds()
 
     def web_service(self):
         pass
@@ -148,73 +123,57 @@ class ControlPanel(object):
     def manual_control(self):
         subprocess.call(['top'])
 
-    def exit_from_level(self):
-        self.terminated = True
-
     def tools(self):
-        panel = MenuPanel(
+        menu = Menu(
             title='Tools',
             choices={
-                LCDPanel.TL_KEY: ('Reset', self.reset_youpi),
-                LCDPanel.TR_KEY: ('Shutdown', self.shutdown),
-                LCDPanel.BL_KEY: ('About', self.display_about_modal),
-                LCDPanel.BR_KEY: ('Back', self.exit_from_level)
+                ControlPanel.Keys.TL: ('Reset', self.reset_youpi),
+                ControlPanel.Keys.TR: ('Shutdown', self.shutdown),
+                ControlPanel.Keys.BL: ('About', self.display_about_modal),
+                ControlPanel.Keys.BR: ('Back', Menu.BACK)
             },
-            lcd=self.lcd
+            panel=self.pnl
         )
 
-        while not self.terminated:
-            panel.display()
-            panel.get_and_process_input()
-
-        self.terminated = self.shutdown_started
+        done = False
+        while not done:
+            menu.display()
+            done = menu.get_and_process_input() == Menu.BACK
 
     def display_about_modal(self):
-        self.display_about(delay=0)
-        self._wait_for_any_key()
+        self.display_about()
 
     def reset_youpi(self):
-        self.lcd.clear()
-        self.lcd.center_text_at("Resetting Youpi...", 2)
+        self.pnl.clear()
+        self.pnl.center_text_at("Resetting Youpi...", 2)
 
         time.sleep(2)
 
     def shutdown(self):
-        panel = MenuPanel(
+        panel = Menu(
             title='Shutdown',
             choices={
-                LCDPanel.TL_KEY: ('Quit', self.quit),
-                LCDPanel.TR_KEY: ('Reboot', self.reboot),
-                LCDPanel.BL_KEY: ('Power off', self.power_off),
-                LCDPanel.BR_KEY: ('Back', self.exit_from_level)
+                ControlPanel.Keys.TL: ('Quit', 'Q'),
+                ControlPanel.Keys.TR: ('Reboot', 'R'),
+                ControlPanel.Keys.BL: ('Power off', 'P'),
+                ControlPanel.Keys.BR: ('Back', Menu.BACK)
             },
-            lcd=self.lcd
+            panel=self.pnl
         )
 
-        while not self.terminated:
-            panel.display()
-            panel.get_and_process_input()
+        panel.display()
+        action = panel.get_and_process_input()
+        if action == Menu.BACK:
+            return
+        elif action == 'R':
+            self.pnl.display_progress("Reboot")
+            subprocess.call('sudo reboot', shell=True)
+        elif action == 'P':
+            self.pnl.display_progress("Shutdown")
+            subprocess.call('sudo poweroff', shell=True)
 
-        self.terminated = self.shutdown_started
-
-    def quit(self):
-        self.terminated = self.shutdown_started = True
-
-    def in_progress(self, msg):
-        self.lcd.clear()
-        self.lcd.set_leds()
-        self.lcd.center_text_at(msg, 2)
-        self.lcd.center_text_at("in progress...", 3)
-
-    def reboot(self):
-        self.in_progress("Reboot")
-        subprocess.call('sudo reboot', shell=True)
-
-    def power_off(self):
-        self.in_progress("Shutdown")
-        subprocess.call('sudo poweroff', shell=True)
+        self.terminated = True
 
 
 def main():
-    pnl = ControlPanel()
-    pnl.run()
+    TopLevel().run()
