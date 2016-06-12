@@ -185,10 +185,12 @@ class TopLevel(object):
         time.sleep(2)
 
     def disable_youpi(self):
+        # TODO disable Youpi motors
         self.pnl.clear()
-        self.pnl.center_text_at("Youpi motors disabled", 2)
-
-        time.sleep(2)
+        self.pnl.display_splash("""
+            Youpi motors
+            disabled
+        """)
 
     def shutdown(self):
         sel = Selector(
