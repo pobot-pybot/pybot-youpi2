@@ -180,9 +180,13 @@ class TopLevel(object):
 
     def reset_youpi(self):
         self.pnl.clear()
-        self.pnl.center_text_at("Resetting Youpi...", 2)
-
-        time.sleep(2)
+        self.pnl.display_splash(
+            """Place Youpi in
+            home position, then
+            press a button.
+        """)
+        self.pnl.wait_for_key()
+        self.pnl.display_splash("Resetting Youpi...")
 
     def disable_youpi(self):
         # TODO disable Youpi motors
