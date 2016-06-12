@@ -201,7 +201,7 @@ class TopLevel(object):
         sel = Selector(
             title='Shutdown',
             choices=(
-                ('Quit', 'Q'),
+                ('Terminate application', 'Q'),
                 ('Reboot', 'R'),
                 ('Power off', 'P'),
             ),
