@@ -200,6 +200,7 @@ class TopLevel(object):
             return action
 
         elif action == 'Q':
+            self.pnl.clear()
             self.pnl.write_at("I'll be back...")
             return self.QUIT
 
