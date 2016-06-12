@@ -58,8 +58,12 @@ class TopLevel(object):
             ),
             panel=self.pnl
         )
-        sel.display()
-        return sel.handle_choice()
+
+        while True:
+            sel.display()
+            action = sel.handle_choice()
+            if action == Selector.ESC:
+                return action
 
     def demo_auto(self):
         self.pnl.display_splash("""
@@ -90,20 +94,20 @@ class TopLevel(object):
 
     def network_control(self):
         sel = Selector(
-            title='Network',
+            title='Network mode',
             choices=(
                 ('Web services', self.web_services),
-                ('Browser', self.browser_ui),
-                ('Minitel', self.minitel_ui),
+                ('Browser UI', self.browser_ui),
+                ('Minitel UI', self.minitel_ui),
             ),
             panel=self.pnl
         )
 
         while True:
             sel.display()
-            ret = sel.handle_choice()
-            if ret == Selector.ESC:
-                return ret
+            action = sel.handle_choice()
+            if action == Selector.ESC:
+                return action
 
     def web_services(self):
         self.pnl.leds_off()
@@ -163,9 +167,9 @@ class TopLevel(object):
 
         while True:
             sel.display()
-            ret = sel.handle_choice()
-            if ret in (Selector.ESC, self.TERMINATE):
-                return ret
+            action = sel.handle_choice()
+            if action in (Selector.ESC, self.TERMINATE):
+                return action
 
     def display_about_modal(self):
         self.display_about()
