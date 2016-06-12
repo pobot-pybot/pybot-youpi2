@@ -42,11 +42,12 @@ class TopLevel(object):
 
         while True:
             menu.display()
-            if menu.handle_choice() in (self.SHUTDOWN, self.QUIT):
+            action = menu.handle_choice()
+            if action in (self.SHUTDOWN, self.QUIT):
                 break
 
         self.pnl.leds_off()
-        if self.SHUTDOWN:
+        if action == self.SHUTDOWN:
             self.pnl.set_backlight(False)
             self.pnl.clear()
 
