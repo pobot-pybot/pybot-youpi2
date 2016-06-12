@@ -54,7 +54,7 @@ class TopLevel(object):
             choices=(
                 ('Demo', self.demo_auto),
                 ('Manual', self.manual_control),
-                ('Network', self.web_service),
+                ('Network', self.network_control),
             ),
             panel=self.pnl
         )
@@ -88,9 +88,55 @@ class TopLevel(object):
 
         self.pnl.leds_off()
 
-    def web_service(self):
+    def network_control(self):
+        sel = Selector(
+            title='Network',
+            choices=(
+                ('Web services', self.web_services),
+                ('Browser', self.browser_ui),
+                ('Minitel', self.minitel_ui),
+            ),
+            panel=self.pnl
+        )
+
+        while True:
+            sel.display()
+            ret = sel.handle_choice()
+            if ret == Selector.ESC:
+                return ret
+
+    def web_services(self):
+        self.pnl.leds_off()
         self.pnl.display_splash("""
         Web Services mode
+
+        Stop combo to end
+        """, delay=0)
+
+        while True:
+            keys = self.pnl.get_keys()
+            if keys == {self.pnl.Keys.BL, self.pnl.Keys.BR}:
+                break
+            time.sleep(0.1)
+
+    def browser_ui(self):
+        self.pnl.leds_off()
+        self.pnl.display_splash("""
+        Browser UI mode
+
+        Stop combo to end
+        """, delay=0)
+
+        while True:
+            keys = self.pnl.get_keys()
+            if keys == {self.pnl.Keys.BL, self.pnl.Keys.BR}:
+                break
+            time.sleep(0.1)
+
+    def minitel_ui(self):
+        self.pnl.leds_off()
+        self.pnl.display_splash("""
+        Minitel UI mode
 
         Stop combo to end
         """, delay=0)
