@@ -12,7 +12,8 @@ __author__ = 'Eric Pascual'
 
 
 class TopLevel(object):
-    TERMINATE = -9
+    SHUTDOWN = -9
+    QUIT = -10
 
     def __init__(self):
         self.pnl = ControlPanel(i2c_bus)
@@ -41,12 +42,13 @@ class TopLevel(object):
 
         while True:
             menu.display()
-            if menu.handle_choice() == self.TERMINATE:
+            if menu.handle_choice() in (self.SHUTDOWN, self.QUIT):
                 break
 
-        self.pnl.set_backlight(False)
-        self.pnl.clear()
         self.pnl.leds_off()
+        if self.SHUTDOWN:
+            self.pnl.set_backlight(False)
+            self.pnl.clear()
 
     def mode_selector(self):
         sel = Selector(
@@ -168,7 +170,7 @@ class TopLevel(object):
         while True:
             sel.display()
             action = sel.handle_choice()
-            if action in (Selector.ESC, self.TERMINATE):
+            if action in (Selector.ESC, self.SHUTDOWN):
                 return action
 
     def display_about_modal(self):
@@ -196,6 +198,10 @@ class TopLevel(object):
         if action == Selector.ESC:
             return action
 
+        elif action == 'Q':
+            self.pnl.write_at("I'll be back...")
+            return self.QUIT
+
         elif action == 'R':
             self.pnl.display_progress("Reboot")
             subprocess.call('sudo reboot', shell=True)
@@ -203,7 +209,7 @@ class TopLevel(object):
             self.pnl.display_progress("Shutdown")
             subprocess.call('sudo poweroff', shell=True)
 
-        return self.TERMINATE
+        return self.SHUTDOWN
 
 
 def main():
