@@ -33,11 +33,7 @@ class TopLevel(object):
         menu = Menu(
             title='Main menu',
             choices={
-                # ControlPanel.Keys.TL: ('Demo', self.demo_auto),
-                # ControlPanel.Keys.TR: ('WS mode', self.web_service),
-                # ControlPanel.Keys.BL: ('Man. ctrl', self.manual_control),
-                # ControlPanel.Keys.BR: ('Tools', self.tools),
-                ControlPanel.Keys.BL: ('System', self.tools),
+                ControlPanel.Keys.BL: ('System', self.system_functions),
                 ControlPanel.Keys.BR: ('Mode', self.mode_selector),
             },
             panel=self.pnl
@@ -108,23 +104,22 @@ class TopLevel(object):
     def manual_control(self):
         subprocess.call(['top'])
 
-    def tools(self):
-        menu = Menu(
-            title='Tools',
-            choices={
-                ControlPanel.Keys.TL: ('Esc', Menu.BACK),
-                ControlPanel.Keys.TR: ('About', self.display_about_modal),
-                ControlPanel.Keys.BL: ('Reset', self.reset_youpi),
-                ControlPanel.Keys.BR: ('Shutdown', self.shutdown),
-            },
+    def system_functions(self):
+        sel = Selector(
+            title='System',
+            choices=(
+                ('About', self.display_about_modal),
+                ('Reset', self.reset_youpi),
+                ('Shutdown', self.shutdown),
+            ),
             panel=self.pnl
         )
 
         while True:
-            menu.display()
-            gpi = menu.handle_choice()
-            if gpi in (Menu.BACK, self.TERMINATE):
-                return gpi
+            sel.display()
+            ret = sel.handle_choice()
+            if ret in (Selector.ESC, self.TERMINATE):
+                return ret
 
     def display_about_modal(self):
         self.display_about()
@@ -136,21 +131,20 @@ class TopLevel(object):
         time.sleep(2)
 
     def shutdown(self):
-        panel = Menu(
+        sel = Selector(
             title='Shutdown',
-            choices={
-                ControlPanel.Keys.TL: ('Esc', Menu.BACK),
-                ControlPanel.Keys.TR: ('Quit', 'Q'),
-                ControlPanel.Keys.BL: ('Reboot', 'R'),
-                ControlPanel.Keys.BR: ('Power off', 'P'),
-            },
+            choices=(
+                ('Quit', 'Q'),
+                ('Reboot', 'R'),
+                ('Power off', 'P'),
+            ),
             panel=self.pnl
         )
 
-        panel.display()
-        action = panel.handle_choice()
-        if action == Menu.BACK:
-            return Menu.BACK
+        sel.display()
+        action = sel.handle_choice()
+        if action == Selector.ESC:
+            return action
 
         elif action == 'R':
             self.pnl.display_progress("Reboot")
