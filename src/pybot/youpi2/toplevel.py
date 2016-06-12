@@ -170,7 +170,7 @@ class TopLevel(object):
         while True:
             sel.display()
             action = sel.handle_choice()
-            if action in (Selector.ESC, self.SHUTDOWN):
+            if action in (Selector.ESC, self.SHUTDOWN, self.QUIT):
                 return action
 
     def display_about_modal(self):
