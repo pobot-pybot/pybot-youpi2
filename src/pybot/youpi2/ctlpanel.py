@@ -152,7 +152,7 @@ class ControlPanel(LCD05):
             if self.is_locked():
                 self.leds_off()
             else:
-                self.set_leds(valid)
+                self.set_leds(valid or self.Keys.ALL)
 
             keys = self.get_keys()
             if keys:
