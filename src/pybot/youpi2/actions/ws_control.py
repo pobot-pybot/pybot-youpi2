@@ -11,6 +11,7 @@ class WebServicesController(Action):
     def execute(self):
         self.panel.display_splash("""
         Web Services mode
+        (not yet available)
         """, delay=0)
 
         self.panel.clear_was_locked_status()

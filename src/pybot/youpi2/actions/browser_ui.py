@@ -11,6 +11,7 @@ class WebBrowserUi(Action):
     def execute(self):
         self.panel.display_splash("""
         Browser UI mode
+        (not yet available)
         """, delay=0)
 
         self.panel.clear_was_locked_status()
