@@ -62,23 +62,33 @@ class ControlPanel(LCD05):
                     iter(keys)
                 except TypeError:
                     keys = [keys]
-                return ~reduce(lambda x, y: x | y, [1 << (k - 1) for k in keys]) & 0xff
+                return ~reduce(lambda x, y: x | y, [1 << (k - 1) for k in keys]) & 0x0f
             else:
                 return 0x0f
 
     def __init__(self, bus, debug=False):
         super(LCD05, self).__init__(bus, debug=debug)
+        self.was_locked = False
 
     def set_leds(self, keys=None):
         """ Turns a set of LEDs on.
 
         .. seealso:: :py:meth:`Keys.mask` for parameter definition.
         """
-        self._bus.write_byte_data(self.EXPANDER_ADDR, 0, self.Keys.mask(keys))
+        self._bus.write_byte(self.EXPANDER_ADDR, self.Keys.mask(keys) | 0xf0)
 
     def leds_off(self):
         """ Convenience function for turning all the LEDs off. """
         self.set_leds()
+
+    def is_locked(self):
+        """ Tells if the lock switch is on or off.
+
+        The lock switch must be connected to P7 PCF IO, and must pull the input
+        down to the ground when closed. Since the security switch used here is opened
+        when the key removal position, the HIGH state corresponds to "locked".
+        """
+        return self._bus.read_byte(self.EXPANDER_ADDR) & 0x80
 
     def reset(self):
         """ Resets the panel by chaining the following operations :
@@ -149,13 +159,34 @@ class ControlPanel(LCD05):
         """ Overridden version if the inherited :py:meth:`LCD05.get_keys` method, converting
         default key identifications to the ones used by the panel.
 
+        The panel lock switch is tested first for input inhibition.
+
         .. seealso:: :py:meth:`LCD05.get_keys`
         """
+        if self.is_locked():
+            return set()
+
         keys = super(ControlPanel, self).get_keys()
         if keys:
             return {self.KEYPAD_3x4_KEYS.index(k) + self.Keys.FIRST for k in keys if k in self.KEYPAD_3x4_KEYS}
         else:
             return set()
+
+    def clear_was_locked_status(self):
+        self.was_locked = None
+
+    def any_key_to_exit_message(self, msg='Any key to exit', line=4):
+        """ Displays a "any key to exit" message if the panel is unlocked"""
+        is_locked = self.is_locked()
+        if self.was_locked is None or is_locked != self.was_locked:
+            if is_locked:
+                self.write_at(' ' * self.width, line=line)
+                self.leds_off()
+            else:
+                self.center_text_at(msg, line=line)
+                self.set_leds(self.Keys.ALL)
+
+            self.was_locked = is_locked
 
 
 class Menu(object):

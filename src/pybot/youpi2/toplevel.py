@@ -19,6 +19,7 @@ from actions.ws_control import WebServicesController
 from actions.browser_ui import WebBrowserUi
 from actions.minitel_ui import MinitelUi
 from actions.manual_control import ManualControl
+from actions.youpi_system_actions import Reset, Disable
 
 __author__ = 'Eric Pascual'
 
@@ -97,8 +98,8 @@ class TopLevel(object):
             title='System',
             choices=(
                 ('About', self.display_about_modal),
-                ('Reset Youpi', self.reset_youpi),
-                ('Disable Youpi', self.disable_youpi),
+                ('Reset Youpi', Reset(self.panel, self.arm).execute),
+                ('Disable Youpi', Disable(self.panel, self.arm).execute),
                 ('Shutdown', self.shutdown),
             ),
             exit_on=(Selector.ESC, self.SHUTDOWN, self.QUIT)
@@ -106,25 +107,6 @@ class TopLevel(object):
 
     def display_about_modal(self):
         self.display_about()
-
-    def reset_youpi(self):
-        self.panel.clear()
-        self.panel.display_splash(
-            """Place Youpi in
-            home position, then
-            press a button.
-        """)
-        self.panel.wait_for_key()
-        self.panel.leds_off()
-        self.panel.display_splash("Resetting Youpi...")
-
-    def disable_youpi(self):
-        # TODO disable Youpi motors
-        self.panel.clear()
-        self.panel.display_splash("""
-            Youpi motors
-            disabled
-        """)
 
     def shutdown(self):
         action = self.sublevel(
