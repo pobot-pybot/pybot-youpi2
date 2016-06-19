@@ -9,16 +9,16 @@ __author__ = 'Eric Pascual'
 
 class WebBrowserUi(Action):
     def execute(self):
-        self.panel.leds_off()
         self.panel.display_splash("""
         Browser UI mode
-
-        Stop combo to end
         """, delay=0)
 
-        while True:
-            keys = self.panel.get_keys()
-            if keys == {self.panel.Keys.BL, self.panel.Keys.BR}:
-                break
-            time.sleep(0.1)
+        self.panel.clear_was_locked_status()
 
+        while True:
+            self.panel.any_key_to_exit_message()
+
+            if self.panel.get_keys():
+                return
+
+            time.sleep(0.1)

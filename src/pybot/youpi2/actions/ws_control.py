@@ -9,7 +9,6 @@ __author__ = 'Eric Pascual'
 
 class WebServicesController(Action):
     def execute(self):
-        self.panel.leds_off()
         self.panel.display_splash("""
         Web Services mode
         """, delay=0)
