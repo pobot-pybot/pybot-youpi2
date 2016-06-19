@@ -15,14 +15,14 @@ class StandAloneDemo(Action):
             """Place arm in neutral
             position and hit
             any key.
-            """, delay=0)
+            """, delay=-1)
 
     def execute(self):
         self.prepare()
 
         self.panel.display_splash("""
         Automatic demo mode
-        """, delay=-1)
+        """, delay=0)
 
         self.panel.clear_was_locked_status()
 
