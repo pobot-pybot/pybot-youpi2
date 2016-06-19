@@ -29,6 +29,7 @@ class ControlPanel(LCD05):
     EXPANDER_ADDR = 0x20
     KEYPAD_SCAN_PERIOD = 0.1
     KEYPAD_3x4_KEYS = '1245'
+    WAIT_FOR_EVER = -1
 
     class Keys(object):
         """ A symbolic representation of the panel keys """
@@ -110,12 +111,12 @@ class ControlPanel(LCD05):
         """ Displays a page of text and waits before returning.
 
         If a wait is provided (as a number of seconds) the method waits
-        before returning. If 0 is passed as delay, an infinite wait is done,
-        which ends by pressing one of the keypad keys.
+        before returning. If `WAIT_FOR_EVER` (or any negative delay) is passed,
+        an infinite wait is done, ended by pressing one of the keypad keys.
 
         :param str text: the lines of text, separated by newlines ('\n')
         :param int delay: the number of seconds to wait before returning.
-        If 0, a key wait is used instead of a time delay.
+        If < 0, a key wait is used instead of a time delay.
         """
         self.clear()
         for i, line in enumerate(text.split('\n', 3)):
