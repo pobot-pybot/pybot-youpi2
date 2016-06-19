@@ -148,16 +148,17 @@ class ControlPanel(LCD05):
         :return: the pressed key
         :rtype: int
         """
+        valid = valid or self.Keys.ALL
         while True:
             if self.is_locked():
                 self.leds_off()
             else:
-                self.set_leds(valid or self.Keys.ALL)
+                self.set_leds(valid)
 
             keys = self.get_keys()
             if keys:
                 k = keys.pop()
-                if valid is None or k in valid:
+                if k in valid:
                     return k
             time.sleep(self.KEYPAD_SCAN_PERIOD)
 
