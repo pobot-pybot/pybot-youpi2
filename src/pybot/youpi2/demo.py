@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+""" Curses UI based demo """
+
 import time
 from collections import namedtuple
 import curses

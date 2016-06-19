@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+""" Youpi top level controller
+
+Manages the arm and the user interactions.
+"""
+
 import subprocess
 import time
 
@@ -7,6 +12,12 @@ from pybot.raspi import i2c_bus
 from pybot.youpi2.ctlpanel import Menu, Selector
 from .__version__ import version
 from .ctlpanel import ControlPanel
+
+from actions.about import DisplayAbout
+from actions.demo_auto import StandAloneDemo
+from actions.ws_control import WebServicesController
+from actions.browser_ui import WebBrowserUi
+from actions.minitel_ui import MinitelUi
 
 __author__ = 'Eric Pascual'
 
@@ -16,19 +27,15 @@ class TopLevel(object):
     QUIT = -10
 
     def __init__(self):
-        self.pnl = ControlPanel(i2c_bus)
+        self.panel = ControlPanel(i2c_bus)
+        # TODO
+        self.arm = None
 
     def display_about(self):
-        self.pnl.display_splash("""
-        Youpi Control
-
-        version %(version)s
-        """ % {
-            'version': version.split('+')[0]
-        }, delay=2)
+        DisplayAbout(self.panel, None, version=version).execute()
 
     def run(self):
-        self.pnl.reset()
+        self.panel.reset()
         self.display_about()
 
         menu = Menu(
@@ -37,19 +44,18 @@ class TopLevel(object):
                 ControlPanel.Keys.BL: ('System', self.system_functions),
                 ControlPanel.Keys.BR: ('Mode', self.mode_selector),
             },
-            panel=self.pnl
+            panel=self.panel
         )
 
         while True:
             menu.display()
             action = menu.handle_choice()
             if action in (self.SHUTDOWN, self.QUIT):
-                break
-
-        self.pnl.leds_off()
-        if action == self.SHUTDOWN:
-            self.pnl.set_backlight(False)
-            self.pnl.clear()
+                self.panel.leds_off()
+                if action == self.SHUTDOWN:
+                    self.panel.set_backlight(False)
+                    self.panel.clear()
+                return
 
     def mode_selector(self):
         sel = Selector(
@@ -59,7 +65,7 @@ class TopLevel(object):
                 ('Manual', self.manual_control),
                 ('Network', self.network_control),
             ),
-            panel=self.pnl
+            panel=self.panel
         )
 
         while True:
@@ -69,41 +75,17 @@ class TopLevel(object):
                 return
 
     def demo_auto(self):
-        self.pnl.display_splash("""
-        Automatic demo
-
-        Hit a key to end
-        """, delay=0)
-
-        sequence = (self.pnl.Keys.TL, self.pnl.Keys.TR, self.pnl.Keys.BR, self.pnl.Keys.BL)
-        progress = 0
-
-        clock = 0
-        self.pnl.set_leds(sequence[progress])
-
-        while True:
-            keys = self.pnl.get_keys()
-            if keys:
-                break
-            time.sleep(0.1)
-
-            now = time.time()
-            if now - clock >= .2:
-                progress = (progress + 1) % len(sequence)
-                self.pnl.set_leds(sequence[progress])
-                clock = now
-
-        self.pnl.leds_off()
+        StandAloneDemo(self.panel, self.arm).execute()
 
     def network_control(self):
         sel = Selector(
             title='Network mode',
             choices=(
-                ('Web services', self.web_services),
-                ('Browser UI', self.browser_ui),
-                ('Minitel UI', self.minitel_ui),
+                ('Web services', WebServicesController(self.panel, self.arm).execute),
+                ('Browser UI', WebBrowserUi(self.panel, self.arm).execute),
+                ('Minitel UI', MinitelUi(self.panel, self.arm).execute),
             ),
-            panel=self.pnl
+            panel=self.panel
         )
 
         while True:
@@ -112,47 +94,14 @@ class TopLevel(object):
             if action == Selector.ESC:
                 return
 
-    def web_services(self):
-        self.pnl.leds_off()
-        self.pnl.display_splash("""
-        Web Services mode
-
-        Stop combo to end
-        """, delay=0)
-
-        while True:
-            keys = self.pnl.get_keys()
-            if keys == {self.pnl.Keys.BL, self.pnl.Keys.BR}:
-                break
-            time.sleep(0.1)
-
-    def browser_ui(self):
-        self.pnl.leds_off()
-        self.pnl.display_splash("""
-        Browser UI mode
-
-        Stop combo to end
-        """, delay=0)
-
-        while True:
-            keys = self.pnl.get_keys()
-            if keys == {self.pnl.Keys.BL, self.pnl.Keys.BR}:
-                break
-            time.sleep(0.1)
-
-    def minitel_ui(self):
-        self.pnl.leds_off()
-        self.pnl.display_splash("""
-        Minitel UI mode
-
-        Stop combo to end
-        """, delay=0)
-
-        while True:
-            keys = self.pnl.get_keys()
-            if keys == {self.pnl.Keys.BL, self.pnl.Keys.BR}:
-                break
-            time.sleep(0.1)
+    # def web_services(self):
+    #     WebServicesController(self.panel, self.arm).execute()
+    #
+    # def browser_ui(self):
+    #     WebBrowserUi(self.panel, self.arm).execute()
+    #
+    # def minitel_ui(self):
+    #     MinitelUi(self.panel, self.arm).execute()
 
     def manual_control(self):
         subprocess.call(['top'])
@@ -166,7 +115,7 @@ class TopLevel(object):
                 ('Disable Youpi', self.disable_youpi),
                 ('Shutdown', self.shutdown),
             ),
-            panel=self.pnl
+            panel=self.panel
         )
 
         while True:
@@ -179,20 +128,20 @@ class TopLevel(object):
         self.display_about()
 
     def reset_youpi(self):
-        self.pnl.clear()
-        self.pnl.display_splash(
+        self.panel.clear()
+        self.panel.display_splash(
             """Place Youpi in
             home position, then
             press a button.
         """)
-        self.pnl.wait_for_key()
-        self.pnl.leds_off()
-        self.pnl.display_splash("Resetting Youpi...")
+        self.panel.wait_for_key()
+        self.panel.leds_off()
+        self.panel.display_splash("Resetting Youpi...")
 
     def disable_youpi(self):
         # TODO disable Youpi motors
-        self.pnl.clear()
-        self.pnl.display_splash("""
+        self.panel.clear()
+        self.panel.display_splash("""
             Youpi motors
             disabled
         """)
@@ -205,7 +154,7 @@ class TopLevel(object):
                 ('Reboot', 'R'),
                 ('Power off', 'P'),
             ),
-            panel=self.pnl
+            panel=self.panel
         )
 
         sel.display()
@@ -214,15 +163,15 @@ class TopLevel(object):
             return action
 
         elif action == 'Q':
-            self.pnl.clear()
-            self.pnl.write_at("I'll be back...")
+            self.panel.clear()
+            self.panel.write_at("I'll be back...")
             return self.QUIT
 
         elif action == 'R':
-            self.pnl.display_progress("Reboot")
+            self.panel.display_progress("Reboot")
             subprocess.call('sudo reboot', shell=True)
         elif action == 'P':
-            self.pnl.display_progress("Shutdown")
+            self.panel.display_progress("Shutdown")
             subprocess.call('sudo poweroff', shell=True)
 
         return self.SHUTDOWN
