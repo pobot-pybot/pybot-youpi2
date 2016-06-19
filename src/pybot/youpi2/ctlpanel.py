@@ -75,6 +75,7 @@ class ControlPanel(LCD05):
 
         .. seealso:: :py:meth:`Keys.mask` for parameter definition.
         """
+        # take care to set other IOs as inputs (0xf0 mask)
         self._bus.write_byte(self.EXPANDER_ADDR, self.Keys.mask(keys) | 0xf0)
 
     def leds_off(self):
@@ -148,6 +149,11 @@ class ControlPanel(LCD05):
         :rtype: int
         """
         while True:
+            if self.is_locked():
+                self.leds_off()
+            else:
+                self.set_leds(valid)
+
             keys = self.get_keys()
             if keys:
                 k = keys.pop()
@@ -247,7 +253,6 @@ class Menu(object):
             else:
                 s = label
                 self.panel.write_at(s, line, col - len(s) + 1)
-        self.panel.set_leds(self.choices.keys())
 
     def handle_choice(self):
         """ Waits for a user choice and handles it.
@@ -306,7 +311,6 @@ class Selector(object):
         l += "OK".rjust(self.panel.width - len(l), " ")
         self.panel.write_at(l, line=1)
         self.panel.write_at('<' + ' ' * (self.panel.width - 2) + '>', line=4)
-        self.panel.set_leds(ControlPanel.Keys.ALL)
 
     def handle_choice(self):
         while True:
