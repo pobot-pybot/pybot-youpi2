@@ -183,8 +183,8 @@ class ControlPanel(LCD05):
     def clear_was_locked_status(self):
         self.was_locked = None
 
-    def any_key_to_exit_message(self, msg='Any key to exit', line=4):
-        """ Displays a "any key to exit" message if the panel is unlocked"""
+    def any_key_to_exit_message(self, msg='Press a key to exit', line=4):
+        """ Displays the invitation message if the panel is unlocked"""
         is_locked = self.is_locked()
         if self.was_locked is None or is_locked != self.was_locked:
             if is_locked:
