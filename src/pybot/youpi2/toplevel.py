@@ -112,7 +112,7 @@ class TopLevel(object):
         action = self.sublevel(
             title='Shutdown',
             choices=(
-                ('Quit application', 'Q'),
+                ('Quit to shell', 'Q'),
                 ('Reboot', 'R'),
                 ('Power off', 'P'),
             ),
