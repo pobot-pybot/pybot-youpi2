@@ -18,6 +18,7 @@ from actions.demo_auto import StandAloneDemo
 from actions.ws_control import WebServicesController
 from actions.browser_ui import WebBrowserUi
 from actions.minitel_ui import MinitelUi
+from actions.manual_control import ManualControl
 
 __author__ = 'Eric Pascual'
 
@@ -57,57 +58,42 @@ class TopLevel(object):
                     self.panel.clear()
                 return
 
-    def mode_selector(self):
+    def sublevel(self, title, choices, exit_on=None):
         sel = Selector(
-            title='Select mode',
-            choices=(
-                ('Demo', self.demo_auto),
-                ('Manual', self.manual_control),
-                ('Network', self.network_control),
-            ),
+            title=title,
+            choices=choices,
             panel=self.panel
         )
 
+        exit_on = exit_on or [Selector.ESC]
         while True:
             sel.display()
             action = sel.handle_choice()
-            if action == Selector.ESC:
-                return
+            if action in exit_on:
+                return action
 
-    def demo_auto(self):
-        StandAloneDemo(self.panel, self.arm).execute()
+    def mode_selector(self):
+        return self.sublevel(
+            title='Select mode',
+            choices=(
+                ('Demo', StandAloneDemo(self.panel, self.arm).execute),
+                ('Manual', ManualControl(self.panel, self.arm).execute),
+                ('Network', self.network_control),
+            )
+        )
 
     def network_control(self):
-        sel = Selector(
+        return self.sublevel(
             title='Network mode',
             choices=(
                 ('Web services', WebServicesController(self.panel, self.arm).execute),
                 ('Browser UI', WebBrowserUi(self.panel, self.arm).execute),
                 ('Minitel UI', MinitelUi(self.panel, self.arm).execute),
-            ),
-            panel=self.panel
+            )
         )
 
-        while True:
-            sel.display()
-            action = sel.handle_choice()
-            if action == Selector.ESC:
-                return
-
-    # def web_services(self):
-    #     WebServicesController(self.panel, self.arm).execute()
-    #
-    # def browser_ui(self):
-    #     WebBrowserUi(self.panel, self.arm).execute()
-    #
-    # def minitel_ui(self):
-    #     MinitelUi(self.panel, self.arm).execute()
-
-    def manual_control(self):
-        subprocess.call(['top'])
-
     def system_functions(self):
-        sel = Selector(
+        return self.sublevel(
             title='System',
             choices=(
                 ('About', self.display_about_modal),
@@ -115,14 +101,8 @@ class TopLevel(object):
                 ('Disable Youpi', self.disable_youpi),
                 ('Shutdown', self.shutdown),
             ),
-            panel=self.panel
+            exit_on=(Selector.ESC, self.SHUTDOWN, self.QUIT)
         )
-
-        while True:
-            sel.display()
-            action = sel.handle_choice()
-            if action in (Selector.ESC, self.SHUTDOWN, self.QUIT):
-                return action
 
     def display_about_modal(self):
         self.display_about()
@@ -147,18 +127,16 @@ class TopLevel(object):
         """)
 
     def shutdown(self):
-        sel = Selector(
+        action = self.sublevel(
             title='Shutdown',
             choices=(
                 ('Quit application', 'Q'),
                 ('Reboot', 'R'),
                 ('Power off', 'P'),
             ),
-            panel=self.panel
+            exit_on=(Selector.ESC, 'Q', 'R', 'P')
         )
 
-        sel.display()
-        action = sel.handle_choice()
         if action == Selector.ESC:
             return action
 
