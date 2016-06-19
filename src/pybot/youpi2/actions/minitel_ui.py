@@ -9,17 +9,19 @@ __author__ = 'Eric Pascual'
 
 class MinitelUi(Action):
     def execute(self):
-        self.panel.leds_off()
         self.panel.display_splash("""
-        Minitel UI mode
-
-        Stop combo to end
+        Minitel control mode
+        (not yet available)
         """, delay=0)
 
+        self.panel.clear_was_locked_status()
+
         while True:
-            keys = self.panel.get_keys()
-            if keys == {self.panel.Keys.BL, self.panel.Keys.BR}:
-                break
+            self.panel.any_key_to_exit_message()
+
+            if self.panel.get_keys():
+                return
+
             time.sleep(0.1)
 
 
