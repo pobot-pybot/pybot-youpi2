@@ -74,7 +74,7 @@ class TopLevel(object):
                 return action
 
     def mode_selector(self):
-        return self.sublevel(
+        action = self.sublevel(
             title='Select mode',
             choices=(
                 ('Demo', StandAloneDemo(self.panel, self.arm).execute),
@@ -82,9 +82,11 @@ class TopLevel(object):
                 ('Network', self.network_control),
             )
         )
+        if action != Selector.ESC:
+            return action
 
     def network_control(self):
-        return self.sublevel(
+        action = self.sublevel(
             title='Network mode',
             choices=(
                 ('Web services', WebServicesController(self.panel, self.arm).execute),
@@ -92,6 +94,8 @@ class TopLevel(object):
                 ('Minitel UI', MinitelUi(self.panel, self.arm).execute),
             )
         )
+        if action != Selector.ESC:
+            return action
 
     def system_functions(self):
         return self.sublevel(
@@ -120,7 +124,7 @@ class TopLevel(object):
         )
 
         if action == Selector.ESC:
-            return action
+            return
 
         elif action == 'Q':
             self.panel.clear()
