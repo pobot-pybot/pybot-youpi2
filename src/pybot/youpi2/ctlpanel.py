@@ -309,10 +309,10 @@ class Selector(object):
         self.panel.clear()
         self.panel.leds_off()
         self.panel.center_text_at(self.title, line=2)
-        l = "Esc"
-        l += "OK".rjust(self.panel.width - len(l), " ")
+        l = chr(LCD05.CH_CANCEL)
+        l += chr(LCD05.CH_OK).rjust(self.panel.width - len(l), " ")
         self.panel.write_at(l, line=1)
-        self.panel.write_at('<' + ' ' * (self.panel.width - 2) + '>', line=4)
+        self.panel.write_at(chr(LCD05.CH_ARROW_LEFT) + ' ' * (self.panel.width - 2) + chr(LCD05.CH_ARROW_RIGHT), line=4)
 
     def handle_choice(self):
         while True:

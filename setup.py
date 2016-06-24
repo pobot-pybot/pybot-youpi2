@@ -13,7 +13,7 @@ setup(
     license='',
     author='Eric Pascual',
     author_email='eric@pobot.org',
-    install_requires=['pybot-dspin', 'pybot-lcd'],
+    install_requires=['pybot-dspin', 'pybot-lcd>=0.11.0'],
     download_url='https://github.com/Pobot/PyBot',
     description='Library for Youpi arm controlled by STMicro L6470 (aka dSPIN)',
     entry_points={
