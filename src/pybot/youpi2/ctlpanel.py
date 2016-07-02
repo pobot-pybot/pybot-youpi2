@@ -71,17 +71,29 @@ class ControlPanel(LCD05):
         super(LCD05, self).__init__(bus, debug=debug)
         self.was_locked = False
 
+    @property
+    def leds(self):
+        port_state = self._bus.read_byte(self.EXPANDER_ADDR)
+        return ~port_state & 0x0f
+
+    @leds.setter
+    def leds(self, state):
+        # Remember we work in inverted logic at expander level, since connected
+        # in sink mode => invert the LED states to obtain the port ones.
+        port_state = ~state
+        # Take care also to set other IOs as inputs (0xf0 mask)
+        self._bus.write_byte(self.EXPANDER_ADDR, port_state | 0xf0)
+
     def set_leds(self, keys=None):
         """ Turns a set of LEDs on.
 
         .. seealso:: :py:meth:`Keys.mask` for parameter definition.
         """
-        # take care to set other IOs as inputs (0xf0 mask)
-        self._bus.write_byte(self.EXPANDER_ADDR, self.Keys.mask(keys) | 0xf0)
+        self.leds = self.Keys.mask(keys)
 
     def leds_off(self):
         """ Convenience function for turning all the LEDs off. """
-        self.set_leds()
+        self.leds = 0
 
     def is_locked(self):
         """ Tells if the lock switch is on or off.
