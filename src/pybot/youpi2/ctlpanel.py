@@ -102,7 +102,7 @@ class ControlPanel(LCD05):
         down to the ground when closed. Since the security switch used here is opened
         when the key removal position, the HIGH state corresponds to "locked".
         """
-        return self._bus.read_byte(self.EXPANDER_ADDR) & 0x80
+        return bool(self._bus.read_byte(self.EXPANDER_ADDR) & 0x80)
 
     def reset(self):
         """ Resets the panel by chaining the following operations :
@@ -113,11 +113,8 @@ class ControlPanel(LCD05):
         * turns all the keypad LEDs off
         * set the keypad scanner of the LCD controller in fast mode
         """
-        self.clear()
-        self.set_backlight(True)
-        self.set_cursor_type(ControlPanel.CT_INVISIBLE)
+        super(ControlPanel, self).reset()
         self.leds_off()
-        self.keypad_fast_scan()
 
     def display_splash(self, text, delay=2):
         """ Displays a page of text and waits before returning.
