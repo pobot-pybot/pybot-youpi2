@@ -61,7 +61,9 @@ class ControlPanel(object):
 
     def _fp(self, name):
         try:
-            return self._fs_files[name]
+            fp = self._fs_files[name]
+            fp.seek(0)
+            return fp
         except KeyError:
             raise TypeError("not supported")
 
