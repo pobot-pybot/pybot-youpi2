@@ -56,8 +56,8 @@ class ControlPanel(object):
             except ValueError:
                 pass
             self._info[attr] = value
-        self._width = self._info['width']
-        self._height = self._info['height']
+        self._width = self._info['cols']
+        self._height = self._info['rows']
 
     def _fp(self, name):
         try:
