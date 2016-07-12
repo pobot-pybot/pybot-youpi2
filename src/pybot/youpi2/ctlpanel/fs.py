@@ -78,7 +78,7 @@ class ControlPanel(object):
 
         .. seealso:: :py:meth:`Keys.mask` for parameter definition.
         """
-        self.leds = keys.Keys.mask(keys)
+        self.leds = Keys.mask(keys)
 
     def leds_off(self):
         """ Convenience function for turning all the LEDs off. """
