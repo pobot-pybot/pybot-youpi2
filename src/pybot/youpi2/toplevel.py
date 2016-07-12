@@ -7,7 +7,6 @@ Manages the arm and the user interactions.
 
 import subprocess
 
-from pybot.raspi import i2c_bus
 from pybot.youpi2.ctlpanel.widgets import Menu, Selector
 from .__version__ import version
 from .ctlpanel.fs import ControlPanel
@@ -29,7 +28,7 @@ class TopLevel(object):
     QUIT = -10
 
     def __init__(self):
-        self.panel = ControlPanel(i2c_bus)
+        self.panel = ControlPanel('/mnt/lcdfs')
         # TODO
         self.arm = None
 
