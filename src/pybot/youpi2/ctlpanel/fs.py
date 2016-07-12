@@ -21,7 +21,7 @@ class ControlPanel(object):
 
     _READ_WRITE = {
         F_BACKLIGHT: True,
-        F_KEYS: True,
+        F_KEYS: False,
         F_DISPLAY: True,
         F_INFO: False,
         F_CONTRAST: True,
@@ -44,7 +44,7 @@ class ControlPanel(object):
 
         self._mount_point = mount_point
         self._fs_files = {
-            n: open(os.path.join(mount_point, n), 'w' if self._READ_WRITE[n] else 'r', 0)
+            n: open(os.path.join(mount_point, n), 'r+' if self._READ_WRITE[n] else 'r', 0)
             for n in os.listdir(mount_point)
         }
 
