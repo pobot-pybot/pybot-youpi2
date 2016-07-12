@@ -71,7 +71,7 @@ class ControlPanel(object):
 
     @leds.setter
     def leds(self, state):
-        self._fp(self.F_LEDS).write(state)
+        self._fp(self.F_LEDS).write(str(state))
 
     def set_leds(self, keys=None):
         """ Turns a set of LEDs on.
