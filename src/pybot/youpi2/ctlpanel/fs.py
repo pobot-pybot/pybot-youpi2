@@ -11,6 +11,7 @@ __author__ = 'Eric Pascual'
 
 class ControlPanel(object):
     F_BACKLIGHT = 'backlight'
+    F_BRIGHTNESS = 'brightness'
     F_KEYS = 'keys'
     F_DISPLAY = 'display'
     F_INFO = 'info'
@@ -24,6 +25,7 @@ class ControlPanel(object):
         F_DISPLAY: True,
         F_INFO: False,
         F_CONTRAST: True,
+        F_BRIGHTNESS: True,
         F_LEDS: True,
         F_LOCKED: False,
     }
