@@ -44,7 +44,7 @@ class ControlPanel(object):
 
         self._mount_point = mount_point
         self._fs_files = {
-            n: open(os.path.join(mount_point, n), 'r+' if self._READ_WRITE[n] else 'r', 0)
+            n: open(os.path.join(mount_point, n), 'r+' if self._READ_WRITE[n] else 'r')
             for n in os.listdir(mount_point)
         }
 
@@ -58,6 +58,14 @@ class ControlPanel(object):
             self._info[attr] = value
         self._width = self._info['cols']
         self._height = self._info['rows']
+
+    @property
+    def width(self):
+        return self._width
+
+    @property
+    def height(self):
+        return self._height
 
     def _fp(self, name):
         try:
@@ -73,7 +81,9 @@ class ControlPanel(object):
 
     @leds.setter
     def leds(self, state):
-        self._fp(self.F_LEDS).write(str(state))
+        fp = self._fp(self.F_LEDS)
+        fp.write(str(state))
+        fp.flush()
 
     def set_leds(self, keys=None):
         """ Turns a set of LEDs on.
@@ -97,7 +107,9 @@ class ControlPanel(object):
 
     @backlight.setter
     def backlight(self, on):
-        self._fp(self.F_BACKLIGHT).write('1' if on else '0')
+        fp = self._fp(self.F_BACKLIGHT)
+        fp.write('1' if on else '0')
+        fp.flush()
 
     def reset(self):
         """ Resets the panel by chaining the following operations :
@@ -113,7 +125,9 @@ class ControlPanel(object):
         self.leds_off()
 
     def clear(self):
-        self._fp(self.F_DISPLAY).write('\x0c')
+        fp = self._fp(self.F_DISPLAY)
+        fp.write('\x0c')
+        fp.flush()
 
     def display_splash(self, text, delay=2):
         """ Displays a page of text and waits before returning.
