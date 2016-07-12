@@ -175,7 +175,9 @@ class ControlPanel(object):
         self.write("\x1b[%d;%dH%s" % (line, col, s))
 
     def write(self, s):
-        self._fp(self.F_DISPLAY).write(s)
+        fp = self._fp(self.F_DISPLAY)
+        fp.write(s)
+        fp.flush()
 
     def display_progress(self, msg):
         """ Displays a 'xxx in progress''' message, centered on the LCD.
