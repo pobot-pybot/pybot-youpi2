@@ -6,12 +6,12 @@ Manages the arm and the user interactions.
 """
 
 import subprocess
-import time
 
 from pybot.raspi import i2c_bus
-from pybot.youpi2.ctlpanel import Menu, Selector
+from pybot.youpi2.ctlpanel.widgets import Menu, Selector
 from .__version__ import version
-from .ctlpanel import ControlPanel
+from .ctlpanel.fs import ControlPanel
+from .ctlpanel.keys import Keys
 
 from actions.about import DisplayAbout
 from actions.demo_auto import StandAloneDemo
@@ -43,8 +43,8 @@ class TopLevel(object):
         menu = Menu(
             title='Main menu',
             choices={
-                ControlPanel.Keys.BL: ('System', self.system_functions),
-                ControlPanel.Keys.BR: ('Mode', self.mode_selector),
+                Keys.BL: ('System', self.system_functions),
+                Keys.BR: ('Mode', self.mode_selector),
             },
             panel=self.panel
         )
@@ -55,7 +55,7 @@ class TopLevel(object):
             if action in (self.SHUTDOWN, self.QUIT):
                 self.panel.leds_off()
                 if action == self.SHUTDOWN:
-                    self.panel.set_backlight(False)
+                    self.panel.backlight = False
                     self.panel.clear()
                 return
 
