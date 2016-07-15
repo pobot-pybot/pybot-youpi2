@@ -70,14 +70,14 @@ class ControlPanel(object):
     def _fp(self, name):
         try:
             fp = self._fs_files[name]
-            fp.seek(0)
+            # fp.seek(0)
             return fp
         except KeyError:
             raise TypeError("not supported")
 
     @property
     def leds(self):
-        return int(self._fp(self.F_LEDS).read())
+        return int(self._fp(self.F_LEDS).readline())
 
     @leds.setter
     def leds(self, state):
@@ -99,11 +99,11 @@ class ControlPanel(object):
     def is_locked(self):
         """ Tells if the lock switch is on or off.
         """
-        return bool(int(self._fp(self.F_LOCKED).read()))
+        return bool(int(self._fp(self.F_LOCKED).readline()))
 
     @property
     def backlight(self):
-        return bool(int(self._fp(self.F_BACKLIGHT).read()))
+        return bool(int(self._fp(self.F_BACKLIGHT).readline()))
 
     @backlight.setter
     def backlight(self, on):
