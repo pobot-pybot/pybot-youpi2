@@ -49,7 +49,7 @@ class ControlPanel(object):
         }
 
         self._info = {}
-        for line in self._fs_files[self.F_INFO].readlines():
+        for line in self._fs_files[self.F_INFO]:
             attr, value = (j.strip() for j in line.split(':'))
             try:
                 value = int(value)
@@ -70,14 +70,14 @@ class ControlPanel(object):
     def _fp(self, name):
         try:
             fp = self._fs_files[name]
-            # fp.seek(0)
+            fp.seek(0)
             return fp
         except KeyError:
             raise TypeError("not supported")
 
     @property
     def leds(self):
-        return int(self._fp(self.F_LEDS).readline())
+        return int(self._fp(self.F_LEDS).read())
 
     @leds.setter
     def leds(self, state):
@@ -99,11 +99,11 @@ class ControlPanel(object):
     def is_locked(self):
         """ Tells if the lock switch is on or off.
         """
-        return bool(int(self._fp(self.F_LOCKED).readline()))
+        return bool(int(self._fp(self.F_LOCKED).read()))
 
     @property
     def backlight(self):
-        return bool(int(self._fp(self.F_BACKLIGHT).readline()))
+        return bool(int(self._fp(self.F_BACKLIGHT).read()))
 
     @backlight.setter
     def backlight(self, on):
