@@ -108,7 +108,7 @@ class GripperMotorSettings(MotorSettings):
         self.close_speed = 800
 
 
-class Youpi(DaisyChain):
+class YoupiArm(DaisyChain):
     DEFAULT_STANDBY_PIN = 11
     DEFAULT_BUSYN_PIN = 13
 
@@ -131,7 +131,7 @@ class Youpi(DaisyChain):
     JOINT_PARENTS = [None, None, MOTOR_SHOULDER, MOTOR_ELBOW, -MOTOR_WRIST, None]
 
     def __init__(self, spi_bus=0, spi_dev=0, log_level=log.INFO):
-        super(Youpi, self).__init__(
+        super(YoupiArm, self).__init__(
             chain_length=self.MOTORS_COUNT,
             spi=DSPinSpiDev(spi_bus, spi_dev),
             standby_pin=self.DEFAULT_STANDBY_PIN,
@@ -156,8 +156,8 @@ class Youpi(DaisyChain):
             return
 
         self.log.info('initializing daisy chain')
-        if not super(Youpi, self).initialize():
-            raise YoupiError('initialization failed')
+        if not super(YoupiArm, self).initialize():
+            raise YoupiArmError('initialization failed')
 
         self.log.info("applying settings")
         for i, s in enumerate(self.settings):
@@ -199,7 +199,7 @@ class Youpi(DaisyChain):
         if not emergency:
             self.open_gripper()
 
-        super(Youpi, self).shutdown()
+        super(YoupiArm, self).shutdown()
 
     def open_gripper(self, wait=True, wait_cb=None):
         if not real_raspi:
@@ -444,9 +444,9 @@ class Youpi(DaisyChain):
         return self.joints_goto(angles, wait=wait, wait_cb=wait_cb, coupled=True)
 
 
-class YoupiError(Exception):
+class YoupiArmError(Exception):
     pass
 
 
-class OutOfBoundError(YoupiError):
+class OutOfBoundError(YoupiArmError):
     pass

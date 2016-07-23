@@ -7,24 +7,24 @@ Manages the arm and the user interactions.
 
 import subprocess
 
-from pybot.youpi2.ctlpanel.widgets import Menu, Selector
 from .__version__ import version
+from .ctlpanel.widgets import Menu, Selector
 from .ctlpanel.intf import ControlPanel
 from .ctlpanel.devices.fs import ControlPanelDevice
 from .ctlpanel.keys import Keys
 
-from actions.about import DisplayAbout
-from actions.demo_auto import StandAloneDemo
-from actions.ws_control import WebServicesController
-from actions.browser_ui import WebBrowserUi
-from actions.minitel_ui import MinitelUi
-from actions.manual_control import ManualControl
-from actions.youpi_system_actions import Reset, Disable
+from .actions.about import DisplayAbout
+from .actions.demo_auto import StandAloneDemo
+from .actions.ws_control import WebServicesController
+from .actions.browser_ui import WebBrowserUi
+from .actions.minitel_ui import MinitelUi
+from .actions.manual_control import ManualControl
+from .actions.youpi_system_actions import Reset, Disable
 
 __author__ = 'Eric Pascual'
 
 
-class TopLevel(object):
+class Controller(object):
     SHUTDOWN = -9
     QUIT = -10
 
@@ -142,4 +142,4 @@ class TopLevel(object):
 
 
 def main():
-    TopLevel().run()
+    Controller().run()

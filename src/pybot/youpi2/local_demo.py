@@ -10,10 +10,12 @@ from textwrap import dedent, fill
 
 from pybot.core.log import uncolorify
 
-from .youpi6470 import Youpi, YoupiError, OutOfBoundError
 from pybot.dspin.demo import DSPINDemo, CursesHandler
 from pybot.dspin.defs import Status, Configuration
 from pybot.dspin import real_raspi
+
+from .arm.youpi6470 import YoupiArm, YoupiArmError, OutOfBoundError
+
 
 __author__ = 'Eric Pascual'
 
@@ -68,10 +70,10 @@ class YoupiDemo(DSPINDemo):
     def setup(self):
         super(YoupiDemo, self).setup()
 
-        self.youpi = Youpi(log_level=self.log.getEffectiveLevel())
+        self.youpi = YoupiArm(log_level=self.log.getEffectiveLevel())
         try:
             self.youpi.initialize()
-        except YoupiError as e:
+        except YoupiArmError as e:
             self.log.exception(e)
 
     def display_menu(self):
@@ -174,7 +176,7 @@ class YoupiDemo(DSPINDemo):
             except KeyboardInterrupt:
                 self.youpi.hard_hi_Z()
                 self.error_status('Interrupted')
-            except YoupiError as e:
+            except YoupiArmError as e:
                 self.log.exception(e)
                 self.error_status(str(e))
             else:
