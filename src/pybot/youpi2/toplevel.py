@@ -9,7 +9,7 @@ import subprocess
 
 from pybot.youpi2.ctlpanel.widgets import Menu, Selector
 from .__version__ import version
-from .ctlpanel.fs import ControlPanelDevice
+from .ctlpanel.devices.fs import ControlPanelDevice
 from .ctlpanel.keys import Keys
 
 from actions.about import DisplayAbout
