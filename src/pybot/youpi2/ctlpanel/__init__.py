@@ -1,4 +1,2 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-__author__ = 'Eric Pascual'
+from intf import ControlPanel
+from keys import Keys
