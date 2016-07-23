@@ -9,6 +9,7 @@ import subprocess
 
 from pybot.youpi2.ctlpanel.widgets import Menu, Selector
 from .__version__ import version
+from .ctlpanel.intf import ControlPanel
 from .ctlpanel.devices.fs import ControlPanelDevice
 from .ctlpanel.keys import Keys
 
@@ -28,7 +29,7 @@ class TopLevel(object):
     QUIT = -10
 
     def __init__(self):
-        self.panel = ControlPanelDevice('/mnt/lcdfs')
+        self.panel = ControlPanel(ControlPanelDevice('/mnt/lcdfs'))
         # TODO
         self.arm = None
 
