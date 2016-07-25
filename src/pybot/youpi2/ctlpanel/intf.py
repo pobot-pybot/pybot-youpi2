@@ -3,6 +3,8 @@
 import time
 import string
 
+import evdev
+
 from .keys import Keys
 
 __author__ = 'Eric Pascual'
@@ -12,6 +14,14 @@ class ControlPanel(object):
     KEYPAD_SCAN_PERIOD = 0.1
     KEYPAD_3x4_KEYS = '1245'
     WAIT_FOR_EVER = -1
+    EVDEV_DEVICE_NAME = 'ctrl-panel'
+
+    EVKEY_TO_PNLKEY = {
+        evdev.ecodes.KEY_NUMERIC_1: Keys.TL,
+        evdev.ecodes.KEY_NUMERIC_2: Keys.TR,
+        evdev.ecodes.KEY_NUMERIC_4: Keys.BL,
+        evdev.ecodes.KEY_NUMERIC_5: Keys.BR,
+    }
 
     def __init__(self, device, debug=False):
         """
@@ -25,6 +35,13 @@ class ControlPanel(object):
 
         self._debug = debug
         self.was_locked = False
+
+        self._evdev = None
+        for dev_path in evdev.list_devices():
+            dev = evdev.InputDevice(dev_path)
+            if dev.name == self.EVDEV_DEVICE_NAME:
+                self._evdev = dev
+                break
 
     @staticmethod
     def _check_device_type(device):
@@ -160,17 +177,23 @@ class ControlPanel(object):
         :rtype: int
         """
         valid = valid or Keys.ALL
+        self.clear_was_locked_status()
         while True:
-            if self.is_locked():
-                self.leds_off()
-            else:
-                self.set_leds(valid)
+            # update LEDs state if relevant
+            is_locked = self.is_locked()
+            if self.was_locked is None or self.was_locked != is_locked:
+                if is_locked:
+                    self.leds_off()
+                else:
+                    self.set_leds(valid)
+                self.was_locked = is_locked
 
             keys = self.get_keys()
             if keys:
                 k = keys.pop()
                 if k in valid:
                     return k
+
             time.sleep(self.KEYPAD_SCAN_PERIOD)
 
     def get_keypad_state(self):
@@ -198,11 +221,15 @@ class ControlPanel(object):
         if self.is_locked():
             return set()
 
-        keys = self.state_to_keys(self.get_keypad_state())
-        if keys:
-            return {self.KEYPAD_3x4_KEYS.index(k) + Keys.FIRST for k in keys if k in self.KEYPAD_3x4_KEYS}
+        if self._evdev:
+            return {self.EVKEY_TO_PNLKEY[k] for k in self._evdev.active_keys()}
+
         else:
-            return set()
+            keys = self.state_to_keys(self.get_keypad_state())
+            if keys:
+                return {self.KEYPAD_3x4_KEYS.index(k) + Keys.FIRST for k in keys if k in self.KEYPAD_3x4_KEYS}
+            else:
+                return set()
 
     def clear_was_locked_status(self):
         self.was_locked = None
