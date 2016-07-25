@@ -12,6 +12,7 @@ system.
 """
 
 import os
+import threading
 
 __author__ = 'Eric Pascual'
 
@@ -140,4 +141,10 @@ class ControlPanelDevice(object):
         fp.flush()
 
     def get_keypad_state(self):
-        return int(self._fp(self.F_KEYS).read())
+        # handle potential race concurrency by retaining the latest information
+        raw = self._fp(self.F_KEYS).read().strip()
+        try:
+            return int(raw.split('\n')[-1])
+        except ValueError:
+            # handle possible invalid data
+            return 0

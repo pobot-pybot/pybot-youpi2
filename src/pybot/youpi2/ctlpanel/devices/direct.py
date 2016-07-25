@@ -13,8 +13,11 @@ The version of the :py:class:`ControlPanel` class defined in this module
 uses a direct access to the panel via the I2C bus.
 """
 
+from evdev import ecodes
+
 from pybot.lcd.lcd_i2c import LCD05
-from .keys import Keys
+
+from ..keys import Keys
 
 __author__ = 'Eric Pascual'
 
@@ -78,3 +81,14 @@ class ControlPanelDevice(LCD05):
         """
         self.leds_off()
         super(ControlPanelDevice, self).reset()
+
+    @staticmethod
+    def get_keypad_map():
+        keypad_map = [None] * 12
+
+        keypad_map[0] = ecodes.KEY_ESC
+        keypad_map[1] = ecodes.KEY_OK
+        keypad_map[3] = ecodes.KEY_PREVIOUS
+        keypad_map[4] = ecodes.KEY_NEXT
+
+        return keypad_map
