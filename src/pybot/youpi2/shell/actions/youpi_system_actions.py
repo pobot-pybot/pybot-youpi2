@@ -24,5 +24,5 @@ class Disable(Action):
         self.panel.clear()
         self.panel.display_splash("""
             Youpi motors
-            disabled
+            are disabled
         """)
