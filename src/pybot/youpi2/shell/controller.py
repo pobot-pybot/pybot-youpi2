@@ -7,19 +7,20 @@ Manages the arm and the user interactions.
 
 import subprocess
 
-from .__version__ import version
-from .ctlpanel.widgets import Menu, Selector
-from .ctlpanel.intf import ControlPanel
-from .ctlpanel.devices.fs import ControlPanelDevice
-from .ctlpanel.keys import Keys
+from pybot.youpi2.__version__ import version
 
-from .actions.about import DisplayAbout
-from .actions.demo_auto import StandAloneDemo
-from .actions.ws_control import WebServicesController
-from .actions.browser_ui import WebBrowserUi
-from .actions.minitel_ui import MinitelUi
-from .actions.manual_control import ManualControl
-from .actions.youpi_system_actions import Reset, Disable
+from pybot.youpi2.ctlpanel.widgets import Menu, Selector
+from pybot.youpi2.ctlpanel.intf import ControlPanel
+from pybot.youpi2.ctlpanel.devices.fs import ControlPanelDevice
+from pybot.youpi2.ctlpanel.keys import Keys
+
+from pybot.youpi2.shell.actions.about import DisplayAbout
+from pybot.youpi2.shell.actions.demo_auto import StandAloneDemo
+from pybot.youpi2.shell.actions.ws_control import WebServicesController
+from pybot.youpi2.shell.actions.browser_ui import WebBrowserUi
+from pybot.youpi2.shell.actions.minitel_ui import MinitelUi
+from pybot.youpi2.shell.actions.manual_control import ManualControl
+from pybot.youpi2.shell.actions.youpi_system_actions import Reset, Disable
 
 __author__ = 'Eric Pascual'
 
