@@ -2,11 +2,28 @@
 # -*- coding: utf-8 -*-
 
 import time
-import logging
+from logging.config import dictConfig
+
+from pybot.core import log
 
 __author__ = 'Eric Pascual'
 
+dictConfig(log.get_logging_configuration({
+    'handlers': {
+        'file': {
+            'filename': '/tmp/youpinitel.log'
+        }
+    },
+    'loggers': {
+        'root': {
+            'handlers': ['console']
+        }
+    }
+}))
+
 
 def main():
+    logger = log.getLogger('youpinitel')
     while True:
-        time.sleep(0.1)
+        logger.info('running...')
+        time.sleep(0.5)

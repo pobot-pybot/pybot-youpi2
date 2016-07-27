@@ -16,10 +16,12 @@ class ExternalProcessAction(Action):
     TITLE = None
 
     def execute(self):
+        self.panel.clear()
         self.panel.center_text_at(self.TITLE, line=2)
 
         # start the demonstration as a child process
         try:
+            self.logger.info('starting subprocess')
             app_proc = subprocess.Popen(self.COMMAND, shell=True)
 
         except OSError as e:
@@ -33,16 +35,22 @@ class ExternalProcessAction(Action):
         else:
             self.panel.clear_was_locked_status()
 
-            exit_keys = [Keys.ESC]
+            self.logger.info('monitoring end command')
+            exit_key_combo = {Keys.ESC}
             while True:
                 self.panel.exit_key_message()
 
-                if self.panel.get_keys() == exit_keys:
+                keys = self.panel.get_keys()
+                self.logger.info("keys=%s", keys)
+                if keys == exit_key_combo:
+                    self.logger.info('sending terminate signal to subprocess')
                     app_proc.terminate()
-                    app_proc.wait(30)
+                    self.logger.info('waiting for completion')
+                    app_proc.wait()
+                    self.logger.info('terminated')
                     return
 
-                time.sleep(0.1)
+                time.sleep(0.2)
 
 
 class MinitelUi(ExternalProcessAction):
@@ -50,9 +58,9 @@ class MinitelUi(ExternalProcessAction):
     TITLE = "Minitel control mode"
 
 
-class ManualControl(ExternalProcessAction):
-    COMMAND = "youpi2-manual"
-    TITLE = "Manual control mode"
+class GamepadControl(ExternalProcessAction):
+    COMMAND = "youpi2-gamepad"
+    TITLE = "Gamepad control mode"
 
 
 class WebServicesControl(ExternalProcessAction):

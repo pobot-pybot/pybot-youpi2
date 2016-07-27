@@ -6,6 +6,10 @@ Manages the arm and the user interactions.
 """
 
 import subprocess
+import logging.config
+import os
+
+from pybot.core import log
 
 from pybot.youpi2.__version__ import version
 
@@ -15,10 +19,23 @@ from pybot.youpi2.ctlpanel.devices.fs import ControlPanelDevice
 from pybot.youpi2.ctlpanel.keys import Keys
 
 from pybot.youpi2.shell.actions.about import DisplayAbout
-from pybot.youpi2.shell.actions.extproc import DemoAuto, WebServicesControl, BrowserlUi, ManualControl, MinitelUi
+from pybot.youpi2.shell.actions.extproc import DemoAuto, WebServicesControl, BrowserlUi, GamepadControl, MinitelUi
 from pybot.youpi2.shell.actions.youpi_system_actions import Reset, Disable
 
 __author__ = 'Eric Pascual'
+
+logging.config.dictConfig(log.get_logging_configuration({
+    'handlers': {
+        'file': {
+            'filename': os.path.expanduser('~/youpi2.log')
+        }
+    },
+    'loggers': {
+        'root': {
+            'handlers': ['file']
+        }
+    }
+}))
 
 
 class Controller(object):
@@ -26,6 +43,7 @@ class Controller(object):
     QUIT = -10
 
     def __init__(self):
+        self.logger = log.getLogger()
         self.panel = ControlPanel(ControlPanelDevice('/mnt/lcdfs'))
         # TODO
         self.arm = None
@@ -71,8 +89,9 @@ class Controller(object):
         action = self.sublevel(
             title='Select mode',
             choices=(
-                ('Demo', StandAloneDemo(self.panel, self.arm).execute),
-                ('Manual', ManualControl(self.panel, self.arm).execute),
+                ('Demo', DemoAuto(self.panel, self.arm).execute),
+                ('Gamepad', GamepadControl(self.panel, self.arm).execute),
+                ('Minitel UI', MinitelUi(self.panel, self.arm).execute),
                 ('Network', self.network_control),
             )
         )
@@ -83,9 +102,8 @@ class Controller(object):
         action = self.sublevel(
             title='Network mode',
             choices=(
-                ('Web services', WebServicesController(self.panel, self.arm).execute),
-                ('Browser UI', WebBrowserUi(self.panel, self.arm).execute),
-                ('Minitel UI', MinitelUi(self.panel, self.arm).execute),
+                ('Web services', WebServicesControl(self.panel, self.arm).execute),
+                ('Browser UI', BrowserlUi(self.panel, self.arm).execute),
             )
         )
         if action != Selector.ESC:
