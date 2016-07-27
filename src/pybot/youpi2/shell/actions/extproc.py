@@ -22,7 +22,7 @@ class ExternalProcessAction(Action):
         # start the demonstration as a child process
         try:
             self.logger.info('starting subprocess')
-            cmde = list(self.COMMAND) if isinstance(self.COMMAND, basestring) else self.COMMAND
+            cmde = [self.COMMAND] if isinstance(self.COMMAND, basestring) else self.COMMAND
             app_proc = subprocess.Popen(cmde, shell=True)
 
         except OSError as e:
