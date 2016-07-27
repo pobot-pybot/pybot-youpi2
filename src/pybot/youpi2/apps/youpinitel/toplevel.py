@@ -23,21 +23,25 @@ dictConfig(log.get_logging_configuration({
 }))
 
 
+class GracefulKiller(object):
+    kill_now = False
+
+    def __init__(self, logger):
+        self.logger = logger
+        signal.signal(signal.SIGINT, self.exit_gracefully)
+        signal.signal(signal.SIGTERM, self.exit_gracefully)
+
+    def exit_gracefully(self, signum, frame):
+        self.logger.info("signal %d caught", signum)
+        self.kill_now = True
+
+
 def main():
-    terminate = False
-
-    def catch_sigterm(*args):
-        global terminate
-
-        logger.info('SIGTERM caught')
-        terminate = True
-
-    signal.signal(signal.SIGTERM, catch_sigterm)
-
     logger = log.getLogger('youpinitel')
+    killer = GracefulKiller(logger)
 
-    while not terminate:
+    while not killer.kill_now:
         logger.info('running...')
         time.sleep(0.5)
 
-    logger.info('terminated by SIGTERM')
+    logger.info('terminated')
