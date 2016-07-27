@@ -28,6 +28,8 @@ def main():
 
     def catch_sigterm(*args):
         global terminate
+
+        logger.info('SIGTERM caught')
         terminate = True
 
     signal.signal(signal.SIGTERM, catch_sigterm)
