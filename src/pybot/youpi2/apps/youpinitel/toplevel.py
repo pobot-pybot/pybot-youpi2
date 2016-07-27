@@ -24,6 +24,9 @@ dictConfig(log.get_logging_configuration({
 
 def main():
     logger = log.getLogger('youpinitel')
-    while True:
-        logger.info('running...')
-        time.sleep(0.5)
+    try:
+        while True:
+            logger.info('running...')
+            time.sleep(0.5)
+    except KeyboardInterrupt:
+        logger.info('interrupted')

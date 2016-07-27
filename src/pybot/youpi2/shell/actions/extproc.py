@@ -22,6 +22,7 @@ class ExternalProcessAction(Action):
         # start the demonstration as a child process
         try:
             self.logger.info('starting subprocess')
+            cmde = list(self.COMMAND) if isinstance(self.COMMAND, basestring) else self.COMMAND
             app_proc = subprocess.Popen(self.COMMAND, shell=True)
 
         except OSError as e:
@@ -44,7 +45,7 @@ class ExternalProcessAction(Action):
                 self.logger.info("keys=%s", keys)
                 if keys == exit_key_combo:
                     self.logger.info('sending terminate signal to subprocess')
-                    app_proc.terminate()
+                    app_proc.kill()
                     self.logger.info('waiting for completion')
                     app_proc.wait()
                     self.logger.info('terminated')
