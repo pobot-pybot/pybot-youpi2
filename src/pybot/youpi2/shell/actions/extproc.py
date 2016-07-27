@@ -44,7 +44,7 @@ class ExternalProcessAction(Action):
                 keys = self.panel.get_keys()
                 if keys == exit_key_combo:
                     self.logger.info('sending terminate signal to subprocess')
-                    app_proc.kill()
+                    app_proc.terminate()
                     self.logger.info('waiting for completion')
                     app_proc.wait()
                     self.logger.info('terminated')
