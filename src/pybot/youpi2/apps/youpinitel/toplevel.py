@@ -3,6 +3,7 @@
 
 import time
 from logging.config import dictConfig
+import signal
 
 from pybot.core import log
 
@@ -23,10 +24,18 @@ dictConfig(log.get_logging_configuration({
 
 
 def main():
+    terminate = False
+
+    def catch_sigterm(*args):
+        global terminate
+        terminate = True
+
+    signal.signal(signal.SIGTERM, catch_sigterm)
+
     logger = log.getLogger('youpinitel')
-    try:
-        while True:
-            logger.info('running...')
-            time.sleep(0.5)
-    except KeyboardInterrupt:
-        logger.info('interrupted')
+
+    while not terminate:
+        logger.info('running...')
+        time.sleep(0.5)
+
+    logger.info('terminated by SIGTERM')
