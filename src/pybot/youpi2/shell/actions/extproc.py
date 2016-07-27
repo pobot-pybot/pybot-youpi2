@@ -23,7 +23,7 @@ class ExternalProcessAction(Action):
         try:
             self.logger.info('starting subprocess')
             cmde = [self.COMMAND] if isinstance(self.COMMAND, basestring) else self.COMMAND
-            app_proc = subprocess.Popen(cmde, shell=True)
+            app_proc = subprocess.Popen(cmde)
 
         except OSError as e:
             self.panel.clear()
