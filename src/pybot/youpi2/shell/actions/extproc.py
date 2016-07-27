@@ -23,7 +23,7 @@ class ExternalProcessAction(Action):
         try:
             self.logger.info('starting subprocess')
             cmde = list(self.COMMAND) if isinstance(self.COMMAND, basestring) else self.COMMAND
-            app_proc = subprocess.Popen(self.COMMAND, shell=True)
+            app_proc = subprocess.Popen(cmde, shell=True)
 
         except OSError as e:
             self.panel.clear()
@@ -42,7 +42,6 @@ class ExternalProcessAction(Action):
                 self.panel.exit_key_message()
 
                 keys = self.panel.get_keys()
-                self.logger.info("keys=%s", keys)
                 if keys == exit_key_combo:
                     self.logger.info('sending terminate signal to subprocess')
                     app_proc.kill()
