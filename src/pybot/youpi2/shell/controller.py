@@ -15,11 +15,7 @@ from pybot.youpi2.ctlpanel.devices.fs import ControlPanelDevice
 from pybot.youpi2.ctlpanel.keys import Keys
 
 from pybot.youpi2.shell.actions.about import DisplayAbout
-from pybot.youpi2.shell.actions.demo_auto import StandAloneDemo
-from pybot.youpi2.shell.actions.ws_control import WebServicesController
-from pybot.youpi2.shell.actions.browser_ui import WebBrowserUi
-from pybot.youpi2.shell.actions.minitel_ui import MinitelUi
-from pybot.youpi2.shell.actions.manual_control import ManualControl
+from pybot.youpi2.shell.actions.extproc import DemoAuto, WebServicesControl, BrowserlUi, ManualControl, MinitelUi
 from pybot.youpi2.shell.actions.youpi_system_actions import Reset, Disable
 
 __author__ = 'Eric Pascual'
@@ -44,8 +40,8 @@ class Controller(object):
         menu = Menu(
             title='Main menu',
             choices={
-                Keys.BL: ('System', self.system_functions),
-                Keys.BR: ('Mode', self.mode_selector),
+                Keys.PREVIOUS: ('System', self.system_functions),
+                Keys.NEXT: ('Mode', self.mode_selector),
             },
             panel=self.panel
         )
@@ -53,11 +49,8 @@ class Controller(object):
         while True:
             menu.display()
             action = menu.handle_choice()
-            if action in (self.SHUTDOWN, self.QUIT):
+            if action == self.QUIT:
                 self.panel.leds_off()
-                if action == self.SHUTDOWN:
-                    self.panel.backlight = False
-                    self.panel.clear()
                 return
 
     def sublevel(self, title, choices, exit_on=None):

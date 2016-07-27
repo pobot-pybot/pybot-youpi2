@@ -19,7 +19,8 @@ setup(
     entry_points={
         'console_scripts': [
             'youpi2-local-demo = pybot.youpi2.local_demo:main',
-            'youpi2-shell = pybot.youpi2.shell.controller:main'
+            'youpi2-shell = pybot.youpi2.shell.controller:main',
+            'youpi2-minitel = pybot.youpi2.apps.youpinitel:main'
         ]
     }
 )

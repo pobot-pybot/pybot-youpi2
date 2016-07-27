@@ -6,12 +6,19 @@ __author__ = 'Eric Pascual'
 class Keys(object):
     """ A symbolic representation of the panel keys """
 
-    #: the key identifiers (TL=top-left,...)
-    TL, TR, BL, BR = range(1, 5)
+    #: the key identifiers (top-left=ESC, top-right=OK, bottom-left=PREVIOUS, bottom-right=NEXT)
+    ESC, OK, PREVIOUS, NEXT = range(1, 5)
     #: convenience set of all keys
-    ALL = (TL, TR, BL, BR)
+    ALL = (ESC, OK, PREVIOUS, NEXT)
     #: abbreviated access to the first key in the set
     FIRST = ALL[0]
+    #: key names
+    names = {
+        ESC: 'ESC',
+        OK: 'OK',
+        PREVIOUS: 'PREV',
+        NEXT: 'NEXT'
+    }
 
     @classmethod
     def mask(cls, keys=None):

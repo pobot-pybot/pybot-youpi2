@@ -23,10 +23,10 @@ class Menu(object):
     `Menu.BACK` (-1) means "go back to previous navigation state".
     """
     MENU_POSITIONS = {
-        Keys.TL: (1, 1),
-        Keys.BL: (4, 1),
-        Keys.TR: (1, 20),
-        Keys.BR: (4, 20),
+        Keys.ESC: (1, 1),
+        Keys.PREVIOUS: (4, 1),
+        Keys.OK: (1, 20),
+        Keys.NEXT: (4, 20),
     }
 
     BACK = -1
@@ -99,10 +99,10 @@ class Selector(object):
 
     .. seealso:: refer to :py:class:`Menu` for method definitions
     """
-    KEY_ESC = Keys.TL
-    KEY_OK = Keys.TR
-    KEY_PREV = Keys.BL
-    KEY_NEXT = Keys.BR
+    KEY_ESC = Keys.ESC
+    KEY_OK = Keys.OK
+    KEY_PREV = Keys.PREVIOUS
+    KEY_NEXT = Keys.NEXT
 
     ESC = -1
 

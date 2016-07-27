@@ -17,10 +17,10 @@ class ControlPanel(object):
     EVDEV_DEVICE_NAME = 'ctrl-panel'
 
     EVKEY_TO_PNLKEY = {
-        evdev.ecodes.KEY_NUMERIC_1: Keys.TL,
-        evdev.ecodes.KEY_NUMERIC_2: Keys.TR,
-        evdev.ecodes.KEY_NUMERIC_4: Keys.BL,
-        evdev.ecodes.KEY_NUMERIC_5: Keys.BR,
+        evdev.ecodes.KEY_ESC: Keys.ESC,
+        evdev.ecodes.KEY_OK: Keys.OK,
+        evdev.ecodes.KEY_PREVIOUS: Keys.PREVIOUS,
+        evdev.ecodes.KEY_NEXT: Keys.NEXT,
     }
 
     def __init__(self, device, debug=False):
@@ -235,7 +235,7 @@ class ControlPanel(object):
         self.was_locked = None
 
     def any_key_to_exit_message(self, msg='Press a key to exit', line=4):
-        """ Displays the invitation message if the panel is unlocked"""
+        """ Displays the invitation message if the panel is unlocked """
         is_locked = self.is_locked()
         if self.was_locked is None or is_locked != self.was_locked:
             if is_locked:
@@ -246,3 +246,18 @@ class ControlPanel(object):
                 self.set_leds(Keys.ALL)
 
             self.was_locked = is_locked
+
+    def exit_key_message(self, msg="%(key)s key to exit", line=4, key=Keys.ESC):
+        """ A specialized version of :py:meth:`any_key_to_exit_message` for
+        current state exit """
+        is_locked = self.is_locked()
+        if self.was_locked is None or is_locked != self.was_locked:
+            if is_locked:
+                self.write_at(' ' * self.width, line=line)
+                self.leds_off()
+            else:
+                self.center_text_at(msg % {'key': Keys.names[key]}, line=line)
+                self.set_leds([key])
+
+            self.was_locked = is_locked
+
