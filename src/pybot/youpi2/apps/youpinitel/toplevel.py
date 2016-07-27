@@ -3,9 +3,10 @@
 
 import time
 from logging.config import dictConfig
-import signal
 
 from pybot.core import log
+
+from pybot.youpi2.apps.utils import GracefulKiller
 
 __author__ = 'Eric Pascual'
 
@@ -21,19 +22,6 @@ dictConfig(log.get_logging_configuration({
         }
     }
 }))
-
-
-class GracefulKiller(object):
-    kill_now = False
-
-    def __init__(self, logger):
-        self.logger = logger
-        signal.signal(signal.SIGINT, self.exit_gracefully)
-        signal.signal(signal.SIGTERM, self.exit_gracefully)
-
-    def exit_gracefully(self, signum, frame):
-        self.logger.info("signal %d caught", signum)
-        self.kill_now = True
 
 
 def main():
