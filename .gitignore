@@ -4,3 +4,4 @@ build
 dist
 RELEASE-VERSION
 __version__.py
+.fab_tasks~
