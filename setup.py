@@ -15,12 +15,11 @@ setup(
     author_email='eric@pobot.org',
     install_requires=['pybot-core', 'pybot-dspin', 'pybot-lcd-fuse>=0.20.1'],
     download_url='https://github.com/Pobot/PyBot',
-    description='Library for Youpi arm controlled by STMicro L6470 (aka dSPIN)',
+    description='Youpi2 arm demonstration shared library and runtime shell',
     entry_points={
         'console_scripts': [
             'youpi2-local-demo = pybot.youpi2.local_demo:main',
             'youpi2-shell = pybot.youpi2.shell.controller:main',
-            'youpi2-minitel = pybot.youpi2.apps.youpinitel:main'
         ]
     }
 )
