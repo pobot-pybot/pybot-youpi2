@@ -18,8 +18,7 @@ setup(
     description='Youpi2 arm demonstration shared library and runtime shell',
     entry_points={
         'console_scripts': [
-            'youpi2-local-demo = pybot.youpi2.local_demo:main',
-            'youpi2-shell = pybot.youpi2.shell.controller:main',
+            'youpi2-local-demo = pybot.youpi2.demo:main',
         ]
     }
 )
