@@ -14,7 +14,7 @@ from pybot.dspin.demo import DSPINDemo, CursesHandler
 from pybot.dspin.defs import Status, Configuration
 from pybot.dspin import real_raspi
 
-from .arm.youpi6470 import YoupiArm, YoupiArmError, OutOfBoundError
+from .arm import YoupiArm, YoupiArmError, OutOfBoundError
 
 
 __author__ = 'Eric Pascual'

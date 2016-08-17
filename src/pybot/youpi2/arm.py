@@ -130,18 +130,28 @@ class YoupiArm(DaisyChain):
     JOINT_CHILDREN = [None, MOTOR_ELBOW, MOTOR_WRIST, -MOTOR_HAND_ROT, None, None]
     JOINT_PARENTS = [None, None, MOTOR_SHOULDER, MOTOR_ELBOW, -MOTOR_WRIST, None]
 
-    def __init__(self, spi_bus=0, spi_dev=0, log_level=log.INFO):
+    def __init__(self, spi_bus=0, spi_dev=0, logger=None):
+
+        """
+        :param int spi_bus: the number of the SPI bus used
+        :param int spi_dev: the id of the device on the SPI bus
+        :param int log_level: logging level
+        """
         super(YoupiArm, self).__init__(
             chain_length=self.MOTORS_COUNT,
             spi=DSPinSpiDev(spi_bus, spi_dev),
             standby_pin=self.DEFAULT_STANDBY_PIN,
-            busyn_pin=self.DEFAULT_BUSYN_PIN
+            busyn_pin=self.DEFAULT_BUSYN_PIN,
+            logger=logger
         )
-        self.log.setLevel(log_level)
         self.ready = False
 
     def configure(self, cfg):
-        self.log.info('loading external configuration:')
+        """ Configures the arm based on the provided data.
+
+        :param dict cfg: configuration data
+        """
+        self.logger.info('loading external configuration:')
         raise NotImplementedError()
         # for m_name, m_cfg in cfg.iteritems():
         #     prefix = m_name.upper() + '_'
@@ -151,17 +161,18 @@ class YoupiArm(DaisyChain):
         #         setattr(self, a_name, p_value)
 
     def initialize(self):
+        """ Customized initialisation of dSPIN chain. """
         if not real_raspi:
-            self.log.warn('not on a real RasPi => bypassing initialization')
+            self.logger.warn('not on a real RasPi => bypassing initialization')
             return
 
-        self.log.info('initializing daisy chain')
+        self.logger.info('initializing daisy chain')
         if not super(YoupiArm, self).initialize():
             raise YoupiArmError('initialization failed')
 
-        self.log.info("applying settings")
+        self.logger.info("applying settings")
         for i, s in enumerate(self.settings):
-            self.log.info("[%d] %s", i, s)
+            self.logger.info("[%d] %s", i, s)
 
         self.STEP_MODE, self.MAX_SPEED, self.MIN_SPEED, self.FS_SPD, \
             self.ACC, self.DEC, self.KVAL_RUN, self.KVAL_ACC, self.KVAL_DEC, self.KVAL_HOLD \
@@ -187,13 +198,17 @@ class YoupiArm(DaisyChain):
         )
         self.set_lspd_opt(True)
 
-        self.log.info('initialization complete')
+        self.logger.info('initialization complete')
         self.ready = True
         return True
 
     def shutdown(self, emergency=False):
+        """ Custom shutdown, putting the arm in a suitable configuration
+
+        :param bool emergency: emergency shutdown option (don't try to act on the arm is set)
+        """
         if not real_raspi:
-            self.log.warn('not on a real RasPi => bypassing shutdown')
+            self.logger.warn('not on a real RasPi => bypassing shutdown')
             return
 
         if not emergency:
@@ -202,8 +217,13 @@ class YoupiArm(DaisyChain):
         super(YoupiArm, self).shutdown()
 
     def open_gripper(self, wait=True, wait_cb=None):
+        """ Opens the gripper.
+
+        :param bool wait: if True, wait until the motion is complete before returning to caller
+        :param wait_cb: callback function which is called at the end of the motion
+        """
         if not real_raspi:
-            self.log.warn('not on a real RasPi => bypassing open_gripper')
+            self.logger.warn('not on a real RasPi => bypassing open_gripper')
             return
 
         motors = [self.MOTOR_GRIPPER]
@@ -211,8 +231,15 @@ class YoupiArm(DaisyChain):
         self.go_home(motors, wait, wait_cb)
 
     def close_gripper(self, wait=True, wait_cb=None):
+        """ Closes the gripper.
+
+        The motion is automatically stopped when the object (if any) grasp is detected.
+
+        :param bool wait: if True, wait until the motion is complete before returning to caller
+        :param wait_cb: callback function which is called at the end of the motion
+        """
         if not real_raspi:
-            self.log.warn('not on a real RasPi => bypassing close_gripper')
+            self.logger.warn('not on a real RasPi => bypassing close_gripper')
             return
 
         if self.switch_is_closed[self.MOTOR_GRIPPER]:
@@ -227,8 +254,17 @@ class YoupiArm(DaisyChain):
         }), wait=wait, wait_cb=wait_cb)
 
     def calibrate_gripper(self, wait=True, wait_cb=None):
+        """ Calibrates the gripper.
+
+        The executed sequence consists in locating the end of the close motion, then opening
+        the gripper based on the configured steps count for the full motion, and finally storing
+        the stepper position when fully opened.
+
+        :param bool wait: if True, wait until the motion is complete before returning to caller
+        :param wait_cb: callback function which is called at the end of the motion
+        """
         if not real_raspi:
-            self.log.warn('not on a real RasPi => bypassing calibrate_gripper')
+            self.logger.warn('not on a real RasPi => bypassing calibrate_gripper')
             return
 
         self.close_gripper()
@@ -242,12 +278,24 @@ class YoupiArm(DaisyChain):
         self.reset_pos([self.MOTOR_GRIPPER])
 
     def seek_origins(self, joint_sequence=None):
+        """ Moves to the origins for a list of joints.
+
+        The motions are done in the sequence of the provided joints list.
+
+        :param list joint_sequence: the list of involved joints
+        """
         for motor in joint_sequence or range(self.MOTORS_COUNT):
             self.seek_origin(motor)
 
     def seek_origin(self, motor):
+        """ Moves a given motor to its origin.
+
+        .. note:: this is not done for the gripper since it is managed differently
+
+        :param motor: id of the involved motor
+        """
         if not real_raspi:
-            self.log.warn('not on a real RasPi => bypassing seek_origin')
+            self.logger.warn('not on a real RasPi => bypassing seek_origin')
             return
 
         if motor == self.MOTOR_GRIPPER:
@@ -278,6 +326,12 @@ class YoupiArm(DaisyChain):
         self.reset_pos([motor])
 
     def rotate_hand(self, angle, wait=True, wait_cb=None):
+        """ Rotates the hand by a given angle.
+
+        :param int angle: the rotation angle, in degrees
+        :param bool wait: if True, wait until the motion is complete before returning to caller
+        :param wait_cb: callback function which is called at the end of the motion
+        """
         m_settings = self.settings[self.MOTOR_HAND_ROT]
         self.move(*self.expand_parameters({
             self.MOTOR_HAND_ROT: (
@@ -287,6 +341,12 @@ class YoupiArm(DaisyChain):
         }), wait=wait, wait_cb=wait_cb)
 
     def rotate_hand_to(self, angle, wait=True, wait_cb=None):
+        """ Rotates the hand to a given angle.
+
+        :param int angle: the target angle, in degrees
+        :param bool wait: if True, wait until the motion is complete before returning to caller
+        :param wait_cb: callback function which is called at the end of the motion
+        """
         m_settings = self.settings[self.MOTOR_HAND_ROT]
         self.goto(*self.expand_parameters({
             self.MOTOR_HAND_ROT: [
@@ -334,6 +394,12 @@ class YoupiArm(DaisyChain):
 
     @classmethod
     def _global_to_local(cls, angles):
+        """ Converts joint angles to their relative (aka local) value.
+
+        :param list angles: the angles to convert
+        :return: the corresponding local values
+        :rtype: list
+        """
         local_angles = angles[:]
         for j, a in enumerate(angles):
             parent = cls.JOINT_PARENTS[j]
@@ -355,8 +421,8 @@ class YoupiArm(DaisyChain):
         """
         # compute the final positions, depending on the kind of move (absolute or relative)
         abs_pos_regs = self.read_register(Register.ABS_POS)
-        if self.log.getEffectiveLevel() == log.DEBUG:
-            self.log.debug('_check_limits: abs_pos_regs=%s', abs_pos_regs)
+        if self.logger.getEffectiveLevel() == log.DEBUG:
+            self.logger.debug('_check_limits: abs_pos_regs=%s', abs_pos_regs)
         if rel_move:
             goals = [
                 self.settings[j].steps_to_degrees(cur_steps) + angles.get(j, 0)
@@ -371,8 +437,8 @@ class YoupiArm(DaisyChain):
                 goals[j] = a
 
         local_angles = self._global_to_local(goals)
-        if self.log.getEffectiveLevel() == log.DEBUG:
-            self.log.debug('_check_limits: glb=%s loc=%s)', goals, local_angles)
+        if self.logger.getEffectiveLevel() == log.DEBUG:
+            self.logger.debug('_check_limits: glb=%s loc=%s)', goals, local_angles)
 
         # check the limits now
         for motor in range(self.MOTOR_BASE, self.MOTOR_HAND_ROT):
@@ -393,12 +459,12 @@ class YoupiArm(DaisyChain):
         no command is set for it, but as a consequence of the move of previous motors
         in the coupling chain.
 
-        :param angles: a (joint->angle) dict or the equivalent tuples list
+        :param dict angles: a (joint->angle) dict or the equivalent tuples list
         :param bool wait: True if blocking call
         :param wait_cb: an optional callback o be invoked while waiting in blocking mode
         :param bool coupled: True for taking the coupling in account (default: False)
         :raise: OutOfBoundError if the requested move would push one of more joints outside of
-        its limits
+        their limits
         """
         angles = self._normalize_angles_parameter(angles)
 
