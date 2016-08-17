@@ -15,7 +15,7 @@ setup(
     author_email='eric@pobot.org',
     install_requires=['pybot-core', 'pybot-dspin', 'pybot-lcd-fuse>=0.20.1'],
     download_url='https://github.com/Pobot/PyBot',
-    description='Youpi2 arm demonstration shared library and runtime shell',
+    description='Youpi2 arm shared library',
     entry_points={
         'console_scripts': [
             'youpi2-local-demo = pybot.youpi2.demo:main',
