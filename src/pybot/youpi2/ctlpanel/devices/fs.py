@@ -17,7 +17,7 @@ import threading
 __author__ = 'Eric Pascual'
 
 
-class ControlPanelDevice(object):
+class FileSystemDevice(object):
     F_BACKLIGHT = 'backlight'
     F_BRIGHTNESS = 'brightness'
     F_KEYS = 'keys'
