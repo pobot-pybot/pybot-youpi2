@@ -1,2 +1,2 @@
-from intf import ControlPanel
+from api import ControlPanel
 from keys import Keys
