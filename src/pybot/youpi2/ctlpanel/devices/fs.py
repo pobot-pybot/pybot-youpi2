@@ -85,13 +85,19 @@ class FileSystemDevice(object):
         except KeyError:
             raise TypeError("not supported")
 
+    def _device_write(self, fp, s):
+        try:
+            fp.write(s)
+            fp.flush()
+        except IOError:
+            # IOError can happen at system shutdown time (race condition with device unmount)
+            pass
+
     def get_leds_state(self):
         return int(self._fp(self.F_LEDS).read())
 
     def set_leds_state(self, state):
-        fp = self._fp(self.F_LEDS)
-        fp.write(str(state))
-        fp.flush()
+        self._device_write(self._fp(self.F_LEDS), str(state))
 
     def is_locked(self):
         """ Tells if the lock switch is on or off.
@@ -102,9 +108,7 @@ class FileSystemDevice(object):
         return bool(int(self._fp(self.F_BACKLIGHT).read()))
 
     def set_backlight(self, on):
-        fp = self._fp(self.F_BACKLIGHT)
-        fp.write('1' if on else '0')
-        fp.flush()
+        self._device_write(self._fp(self.F_BACKLIGHT), '1' if on else '0')
 
     def reset(self):
         """ Resets the panel by chaining the following operations :
@@ -120,9 +124,7 @@ class FileSystemDevice(object):
         self.set_leds_state(0)
 
     def clear(self):
-        fp = self._fp(self.F_DISPLAY)
-        fp.write('\x0c')
-        fp.flush()
+        self._device_write(self._fp(self.F_DISPLAY), '\x0c')
 
     def write_at(self, s, line=1, col=1):
         """ Convenience method to write a text at a given location.
@@ -136,9 +138,7 @@ class FileSystemDevice(object):
         self.write("\x1b[%d;%dH%s" % (line, col, s))
 
     def write(self, s):
-        fp = self._fp(self.F_DISPLAY)
-        fp.write(s)
-        fp.flush()
+        self._device_write(self._fp(self.F_DISPLAY), s)
 
     def get_keypad_state(self):
         # handle potential race concurrency by retaining the latest information
