@@ -247,17 +247,19 @@ class ControlPanel(object):
 
             self.was_locked = is_locked
 
-    def exit_key_message(self, msg="%(key)s key to exit", line=4, key=Keys.ESC):
+    def exit_key_message(self, msg="%(key)s key to exit", line=4, keys=Keys.ESC):
         """ A specialized version of :py:meth:`any_key_to_exit_message` for
         current state exit """
+        if not isinstance(keys, (list, tuple, set)):
+            keys = [keys]
         is_locked = self.is_locked()
         if self.was_locked is None or is_locked != self.was_locked:
             if is_locked:
                 self.write_at(' ' * self.width, line=line)
                 self.leds_off()
             else:
-                self.center_text_at(msg % {'key': Keys.names[key]}, line=line)
-                self.set_leds([key])
+                self.center_text_at(msg % {'key': '-'.join([Keys.names[k] for k in keys])}, line=line)
+                self.set_leds(keys)
 
             self.was_locked = is_locked
 
