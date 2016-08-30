@@ -177,6 +177,43 @@ class ControlPanel(object):
         self.center_text_at(msg, 2)
         self.center_text_at("in progress...", 3)
 
+    def wait_for_key(self, valid=None):
+        """ Waits for a key to be pressed and return it.
+
+        In case of multiple presses (chord), only the first one is returned.
+        Sorting sequence is the one defined by the `Keys.ALL` predefined set.
+
+        :param valid: an optional set or list of keys, if the expected one must
+        belong to a specific subset
+        :return: the pressed key
+        :rtype: int
+        :raises Interrupted: if an external signal has interrupted the wait
+        """
+        valid = valid or Keys.ALL
+        self.clear_was_locked_status()
+        while self._active:
+            # update LEDs state if relevant
+            is_locked = self.is_locked()
+            if self.was_locked is None or self.was_locked != is_locked:
+                if is_locked:
+                    self.leds_off()
+                else:
+                    self.set_leds(valid)
+                self.was_locked = is_locked
+
+            keys = self.get_keys()
+            if keys:
+                k = keys.pop()
+                if k in valid:
+                    return k
+
+            time.sleep(self.KEYPAD_SCAN_PERIOD)
+
+        # If arrived here, it means that the active flag has been cleared
+        # as the consequence of a termination signal.
+        # We notify this with the dedicated exception.
+        raise Interrupted()
+
     def countdown(self, msg, delay=3, can_abort=False):
         """ Displays a message with a countdown and exists when it reaches 0.
 
@@ -187,6 +224,7 @@ class ControlPanel(object):
         :param bool can_abort: True if the countdown can be aborted by the ESC key
         :return: True if delay elapsed, False if interrupted by abort key usage or invalid delay
         :rtype: bool
+        :raises Interrupted: if an external signal has interrupted the wait
         """
         if delay <= 0:
             return False
@@ -219,39 +257,11 @@ class ControlPanel(object):
 
                 time.sleep(self.KEYPAD_SCAN_PERIOD)
 
+            # see wait_for_key implementation comments
+            raise Interrupted()
+
         finally:
             self.leds_off()
-
-    def wait_for_key(self, valid=None):
-        """ Waits for a key to be pressed and return it.
-
-        In case of multiple presses (chord), only the first one is returned.
-        Sorting sequence is the one defined by the `Keys.ALL` predefined set.
-
-        :param valid: an optional set or list of keys, if the expected one must
-        belong to a specific subset
-        :return: the pressed key
-        :rtype: int
-        """
-        valid = valid or Keys.ALL
-        self.clear_was_locked_status()
-        while self._active:
-            # update LEDs state if relevant
-            is_locked = self.is_locked()
-            if self.was_locked is None or self.was_locked != is_locked:
-                if is_locked:
-                    self.leds_off()
-                else:
-                    self.set_leds(valid)
-                self.was_locked = is_locked
-
-            keys = self.get_keys()
-            if keys:
-                k = keys.pop()
-                if k in valid:
-                    return k
-
-            time.sleep(self.KEYPAD_SCAN_PERIOD)
 
     def get_keypad_state(self):
         return self._device.get_keypad_state()
@@ -320,3 +330,8 @@ class ControlPanel(object):
 
             self.was_locked = is_locked
 
+
+class Interrupted(Exception):
+    """ This exception is used to notify an external interruption in wait loops,
+    such as when a termination signal has been received by the application.
+    """
