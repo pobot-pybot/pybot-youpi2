@@ -2,7 +2,7 @@
 
 import time
 
-from pybot.dspin import defs, real_raspi
+from pybot.dspin import defs, real_raspi, GPIO
 from pybot.dspin.core import DSPinSpiDev
 from pybot.dspin.daisychain import DaisyChain
 from pybot.dspin.defs import Register
@@ -166,9 +166,14 @@ class YoupiArm(DaisyChain):
             self.logger.warn('not on a real RasPi => bypassing initialization')
             return
 
+        GPIO.setmode(GPIO.BOARD)
+
         self.logger.info('initializing daisy chain')
-        if not super(YoupiArm, self).initialize():
-            raise YoupiArmError('initialization failed')
+        try:
+            if not super(YoupiArm, self).initialize():
+                raise YoupiArmError('initialization failed')
+        except IOError as e:
+            raise YoupiArmError('IOError (check arm connection to SPI)')
 
         self.logger.info("applying settings")
         for i, s in enumerate(self.settings):
@@ -257,8 +262,8 @@ class YoupiArm(DaisyChain):
         """ Calibrates the gripper.
 
         The executed sequence consists in locating the end of the close motion, then opening
-        the gripper based on the configured steps count for the full motion, and finally storing
-        the stepper position when fully opened.
+        the gripper based on the configured steps count for the full motion, and finally resetting
+        the position register of the motor when fully opened.
 
         :param bool wait: if True, wait until the motion is complete before returning to caller
         :param wait_cb: callback function which is called at the end of the motion
@@ -288,7 +293,7 @@ class YoupiArm(DaisyChain):
             self.seek_origin(motor)
 
     def seek_origin(self, motor):
-        """ Moves a given motor to its origin.
+        """ Moves a given motor to its origin and resets its position register.
 
         .. note:: this is not done for the gripper since it is managed differently
 
@@ -508,6 +513,16 @@ class YoupiArm(DaisyChain):
         in the parameters at the end of the motion.
         """
         return self.joints_goto(angles, wait=wait, wait_cb=wait_cb, coupled=True)
+
+    def get_joint_positions(self):
+        """ Returns the current position (in degrees) of the arm joints.
+
+        Positions are returned as an array, which index is the joint motor id.
+
+        :return: current joint positions
+        :rtype: array
+        """
+        return [self.settings[m].steps_to_degrees(s) for m, s in enumerate(self.ABS_POS)]
 
 
 class YoupiArmError(Exception):
