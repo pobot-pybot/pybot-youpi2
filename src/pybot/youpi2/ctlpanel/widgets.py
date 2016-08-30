@@ -12,15 +12,8 @@ class Menu(object):
     A menu is composed of a title centered on the LCD and 1 to 4 choices associated
     to the keypad keys. Choice labels are display next to their respective keys.
 
-    Each choice is associated to a handler, which can take two forms:
-
-    * a callable, returning a value which can be used by the application to decide what
-    to do next
-    * a simple value, which is then returned to the caller
-
-    The returned value can be anything, but it is advised to use *positive* integers.
-    Some specific values are predefined for representing common situations. By default,
-    `Menu.BACK` (-1) means "go back to previous navigation state".
+    Each choice is associated to a handler, which must be a callable, returning
+    True if the current menu must be exited.
     """
     MENU_POSITIONS = {
         Keys.ESC: (1, 1),
@@ -68,9 +61,8 @@ class Menu(object):
     def handle_choice(self):
         """ Waits for a user choice and handles it.
 
-        Only keys with and attached choice are taken in account. The associated
-        handler (if any) is called, and its result is returned. If the handler
-        of the choice is defined as a simple value, it is returned as is.
+        Only keys with an attached choice are taken in account. The associated
+        handler (if any) is called, and its result is returned.
 
         In case of interruption of the wait for key, the Interrupted exception
         will bubble up to application level.
@@ -80,8 +72,11 @@ class Menu(object):
         key = self.panel.wait_for_key(valid=self.choices.keys())
 
         self.panel.leds_off()
-        action = self.choices[key][1]
-        return action() if callable(action) else action
+        action_label, action_handler = self.choices[key]
+        if callable(action_handler):
+            return action_handler()
+        else:
+            raise ValueError("handler attached to action '%s' is not a callable" % action_label)
 
 
 class Selector(object):
@@ -94,61 +89,61 @@ class Selector(object):
     * exiting from the selector without any action
     * validating the currently displayed choice
 
-    As in :class:`Menu`, the action attached to the selected choice is returned
+    As in :class:`Menu`, the action attached to the selected choice is executed
     and the result is returned to the caller.
-
-    When the escape key is used, the special value `Selector.ESC` (-1) is returned by the
-    selector handler. It uses the same numerical value as `Menu.BACK` since the attached
-    semantics is more or less identical.
 
     .. seealso:: refer to :py:class:`Menu` for method definitions
     """
-    KEY_ESC = Keys.ESC
-    KEY_OK = Keys.OK
-    KEY_PREV = Keys.PREVIOUS
-    KEY_NEXT = Keys.NEXT
-
-    ESC = -1
-
-    def __init__(self, title, choices, panel):
+    def __init__(self, title, choices, panel, cancelable=True):
         self.title = title
         self.choices = choices
         self.choices_count = len(choices)
         self.panel = panel
         self.choice = 0
         self._w_choice = self.panel.width - 4
+        self.cancelable = cancelable
+        self.valid_keys = {Keys.PREVIOUS, Keys.NEXT, Keys.OK}
+        if cancelable:
+            self.valid_keys.add(Keys.ESC)
 
     def display(self):
         self.panel.clear()
         self.panel.leds_off()
         self.panel.center_text_at(self.title, line=2)
-        l = chr(LCD05.CH_CANCEL)
+        l = chr(LCD05.CH_CANCEL) if self.cancelable else ' '
         l += chr(LCD05.CH_OK).rjust(self.panel.width - len(l), " ")
         self.panel.write_at(l, line=1)
         self.panel.write_at(chr(LCD05.CH_ARROW_LEFT) + ' ' * (self.panel.width - 2) + chr(LCD05.CH_ARROW_RIGHT), line=4)
 
     def handle_choice(self):
+        """ Lets the user browse the options using the arrow keys, executes the action attached
+        to the one selected with the OK key and returns its result.
+
+        :return: True if selector must be closed after action handling
+        """
         while True:
-            choice_descr = self.choices[self.choice]
-            s = choice_descr[0][:self._w_choice]
-            self.panel.write_at(s.center(self._w_choice), line=4, col=3)
+            choice_descriptor = self.choices[self.choice]
+            action_label = choice_descriptor[0][:self._w_choice]
+            self.panel.write_at(action_label.center(self._w_choice), line=4, col=3)
 
-            key = self.panel.wait_for_key()
-            if key is None:
-                return
-
-            if key == self.KEY_ESC:
-                return self.ESC
-
-            elif key == self.KEY_OK:
-                action = choice_descr[1]
-                return action() if callable(action) else action
-
-            elif key == self.KEY_PREV:
-                self.choice = (self.choice - 1) % self.choices_count
-            elif key == self.KEY_NEXT:
-                self.choice = (self.choice + 1) % self.choices_count
-
-            # wait for key is released
+            # wait for key is pressed
+            key = self.panel.wait_for_key(self.valid_keys)
+            # ... and released
             while self.panel.get_keys():
                 pass
+
+            if key == Keys.ESC:
+                return True
+
+            elif key == Keys.OK:
+                action_handler = choice_descriptor[1]
+                if callable(action_handler):
+                    return action_handler()
+                else:
+                    raise ValueError("handler attached to action '%s' is not a callable" % action_label)
+
+            elif key == Keys.PREVIOUS:
+                self.choice = (self.choice - 1) % self.choices_count
+            elif key == Keys.NEXT:
+                self.choice = (self.choice + 1) % self.choices_count
+
