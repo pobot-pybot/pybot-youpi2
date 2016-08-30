@@ -72,9 +72,13 @@ class Menu(object):
         handler (if any) is called, and its result is returned. If the handler
         of the choice is defined as a simple value, it is returned as is.
 
+        In case of interruption of the wait for key, the Interrupted exception
+        will bubble up to application level.
+
         :return: the choice handler result or the choice attached value
         """
         key = self.panel.wait_for_key(valid=self.choices.keys())
+
         self.panel.leds_off()
         action = self.choices[key][1]
         return action() if callable(action) else action
@@ -130,6 +134,9 @@ class Selector(object):
             self.panel.write_at(s.center(self._w_choice), line=4, col=3)
 
             key = self.panel.wait_for_key()
+            if key is None:
+                return
+
             if key == self.KEY_ESC:
                 return self.ESC
 
