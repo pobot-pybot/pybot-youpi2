@@ -30,11 +30,14 @@ class ControlPanel(object):
         """
         if not device:
             raise ValueError('device parameter is mandatory')
+
         self._check_device_type(device)
         self._device = device
 
         self._debug = debug
         self.was_locked = False
+
+        self._active = True
 
         self._evdev = None
         for dev_path in evdev.list_devices():
@@ -42,6 +45,15 @@ class ControlPanel(object):
             if dev.name == self.EVDEV_DEVICE_NAME:
                 self._evdev = dev
                 break
+
+    def terminate(self):
+        """ Clears the active internal flag so that a currently running wait loop will
+        exit.
+
+        This is intended to be used by application signal handlers for a clean shutdown
+        when a SIGTERM or SIGINT (or any specific termination signal) is received.
+        """
+        self._active = False
 
     @staticmethod
     def _check_device_type(device):
@@ -165,6 +177,51 @@ class ControlPanel(object):
         self.center_text_at(msg, 2)
         self.center_text_at("in progress...", 3)
 
+    def countdown(self, msg, delay=3, can_abort=False):
+        """ Displays a message with a countdown and exists when it reaches 0.
+
+        Do nothing if delay is 0 or negative
+
+        :param str msg: the message to be displayed
+        :param int delay: the countdown delay (in seconds)
+        :param bool can_abort: True if the countdown can be aborted by the ESC key
+        :return: True if delay elapsed, False if interrupted by abort key usage or invalid delay
+        :rtype: bool
+        """
+        if delay <= 0:
+            return False
+
+        self.clear()
+        self.leds_off()
+        self.center_text_at(msg, 1)
+
+        abort_keys = {Keys.ESC}
+        if can_abort:
+            self.center_text_at("ESC : Cancel", 4)
+            self.set_leds(Keys.ESC)
+
+        refresh_time = now = time.time()
+        end_time = now + delay
+        try:
+            while self._active:
+                now = time.time()
+                if now >= end_time:
+                    self.center_text_at("NOW", 2)
+                    return True
+
+                if can_abort and self.get_keys() == abort_keys:
+                    return False
+
+                if now >= refresh_time:
+                    self.center_text_at("in %d seconds..." % delay, 2)
+                    refresh_time += 1
+                    delay -= 1
+
+                time.sleep(self.KEYPAD_SCAN_PERIOD)
+
+        finally:
+            self.leds_off()
+
     def wait_for_key(self, valid=None):
         """ Waits for a key to be pressed and return it.
 
@@ -178,7 +235,7 @@ class ControlPanel(object):
         """
         valid = valid or Keys.ALL
         self.clear_was_locked_status()
-        while True:
+        while self._active:
             # update LEDs state if relevant
             is_locked = self.is_locked()
             if self.was_locked is None or self.was_locked != is_locked:
