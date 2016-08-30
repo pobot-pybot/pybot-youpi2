@@ -178,7 +178,7 @@ class ControlPanel(object):
         self.center_text_at("in progress...", 3)
 
     def wait_for_key(self, valid=None):
-        """ Waits for a key to be pressed and return it.
+        """ Waits for a key to be pressed and returns it.
 
         In case of multiple presses (chord), only the first one is returned.
         Sorting sequence is the one defined by the `Keys.ALL` predefined set.
