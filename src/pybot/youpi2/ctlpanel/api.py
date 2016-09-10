@@ -11,6 +11,15 @@ __author__ = 'Eric Pascual'
 
 
 class ControlPanel(object):
+    """ The control panel high level model.
+
+    This model presents an API which is agnostic with respect of the way
+    the panel hardware is managed. It delegates to a lower level object for
+    these operations, which is provided by the caller at instantiation time.
+
+    Refer to the ``devices`` subpackage for the documentation of the provided
+    implementations.
+    """
     KEYPAD_SCAN_PERIOD = 0.1
     KEYPAD_3x4_KEYS = '1245'
     WAIT_FOR_EVER = -1
@@ -125,16 +134,16 @@ class ControlPanel(object):
     def clear(self):
         self._device.clear()
 
-    def display_splash(self, text, delay=2):
+    def display_splash(self, text, delay=3):
         """ Displays a page of text and waits before returning.
 
         If a wait is provided (as a number of seconds) the method waits
         before returning. If `WAIT_FOR_EVER` (or any negative delay) is passed,
         an infinite wait is done, ended by pressing one of the keypad keys.
 
-        :param str text: the lines of text, separated by newlines ('\n')
+        :param str text: the lines of text, separated by newlines (`0x0a`)
         :param int delay: the number of seconds to wait before returning.
-        If < 0, a key wait is used instead of a time delay.
+                If < 0, a key wait is used instead of a time delay.
         """
         self.clear()
         for i, line in enumerate(text.split('\n', 3)):
@@ -184,12 +193,16 @@ class ControlPanel(object):
         Sorting sequence is the one defined by the `Keys.ALL` predefined set.
 
         :param valid: an optional set or list of keys, if the expected one must
-        belong to a specific subset
+                      belong to a specific subset. Single values are accepted
+                      and converted to a set
         :return: the pressed key
         :rtype: int
         :raises Interrupted: if an external signal has interrupted the wait
         """
         valid = valid or Keys.ALL
+        if not isinstance(valid, (set, list, tuple)):
+            valid = {valid}
+
         self.clear_was_locked_status()
         while self._active:
             # update LEDs state if relevant

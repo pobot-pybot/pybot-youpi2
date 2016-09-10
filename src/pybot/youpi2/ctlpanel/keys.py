@@ -33,7 +33,7 @@ class Keys(object):
         to turing all the LEDs off.
 
         :param keys: the set of keys to be turned on, elements being members
-        of `Keys.ALL` set
+                     of `Keys.ALL` set
 
         :raises TypeError: if the passed argument is not a single key or a set of key
         """
