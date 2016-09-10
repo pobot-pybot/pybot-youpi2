@@ -343,7 +343,7 @@ class YoupiArm(DaisyChain):
         initial_switch_state = self.switch_is_closed[motor]
 
         def timeout_abort(action):
-            msg = "time out while %s motor %s origin" % (action, self.MOTOR_NAMES[motor])
+            msg = "time out while %s %s motor origin" % (action, self.MOTOR_NAMES[motor])
             self.logger.error(msg)
             raise CommandTimeOut(msg)
 
@@ -370,7 +370,7 @@ class YoupiArm(DaisyChain):
         try:
             while self.switch_is_closed[motor] != initial_switch_state:
                 if time.time() >= time_limit:
-                    timeout_abort('backing to')
+                    timeout_abort('adjusting to')
                 time.sleep(0.1)
         except CommandTimeOut:
             self.hard_stop([motor])
