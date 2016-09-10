@@ -5,6 +5,13 @@ from pybot.youpi2.ctlpanel.keys import Keys
 
 __author__ = 'Eric Pascual'
 
+CH_CANCEL = LCD05.CH_CANCEL
+CH_OK = LCD05.CH_OK
+CH_ARROW_LEFT = LCD05.CH_ARROW_LEFT
+CH_ARROW_RIGHT = LCD05.CH_ARROW_RIGHT
+CH_ARROW_UP = LCD05.CH_ARROW_UP
+CH_ARROW_DOWN = LCD05.CH_ARROW_DOWN
+
 
 class Menu(object):
     """ Menu definition and handling class.
@@ -33,7 +40,17 @@ class Menu(object):
         :param str title: the title to be display at the LCD center
         :param dict choices: the list of choices
         :param ControlPanel panel: the control panel instance
+        :raises ValueError: if title is missing or empty
+        :raises ValueError: if choices is missing or empty
+        :raises ValueError: if all handlers are not callables
         """
+        if not title:
+            raise ValueError('title is mandatory')
+        if not choices:
+            raise ValueError('choices is mandatory and cannot be empty')
+        if not all([callable(c[-1]) for c in choices.itervalues()]):
+            raise ValueError('choice handlers must be callables')
+
         self.title = title
         self.choices = choices
         self.panel = panel
@@ -67,23 +84,26 @@ class Menu(object):
         In case of interruption of the wait for key, the Interrupted exception
         will bubble up to application level.
 
-        :return: the choice handler result or the choice attached value
+        :return: the choice handler result (True if menu must be exited)
         """
         key = self.panel.wait_for_key(valid=self.choices.keys())
 
+        _, action_handler = self.choices[key]
         self.panel.leds_off()
-        action_label, action_handler = self.choices[key]
-        if callable(action_handler):
-            return action_handler()
-        else:
-            raise ValueError("handler attached to action '%s' is not a callable" % action_label)
+        return action_handler()
 
 
 class Selector(object):
-    """ An alternate type of menu when more than 4 total choices are needed.
+    """ An action or option selector, based on a spinner.
 
-    The list of choices is displayed as a spinner area, using the last line of
-    the display. Bottom keys are used to move in the list of choices. Top-left
+    Choices are specified as an iterable of tuples, each tuple being composed of :
+
+    * the choice label, displayed in the spinner
+    * a callable invoked when the choice is selected, and which returns True
+      if the selector must be exited
+
+    The spinner is displayed on the bottom line of the display.
+    Bottom keys are used to move in the list of choices. Top-left
     and top-right keys are used respectively for :
 
     * exiting from the selector without any action
@@ -95,6 +115,21 @@ class Selector(object):
     .. seealso:: refer to :py:class:`Menu` for method definitions
     """
     def __init__(self, title, choices, panel, cancelable=True):
+        """
+        :param str title: the title to be display at the LCD center
+        :param iterable choices: the list of choices
+        :param ControlPanel panel: the control panel instance
+        :raises ValueError: if title is missing or empty
+        :raises ValueError: if choices is missing or empty
+        :raises ValueError: if all handlers are not callables
+        """
+        if not title:
+            raise ValueError('title is mandatory')
+        if not choices:
+            raise ValueError('choices is mandatory and cannot be empty')
+        if not all([callable(c[-1]) for c in choices]):
+            raise ValueError('choice handlers must be callables')
+
         self.title = title
         self.choices = choices
         self.choices_count = len(choices)
@@ -110,10 +145,10 @@ class Selector(object):
         self.panel.clear()
         self.panel.leds_off()
         self.panel.center_text_at(self.title, line=2)
-        l = chr(LCD05.CH_CANCEL) if self.cancelable else ' '
-        l += chr(LCD05.CH_OK).rjust(self.panel.width - len(l), " ")
+        l = chr(CH_CANCEL) if self.cancelable else ' '
+        l += chr(CH_OK).rjust(self.panel.width - len(l), " ")
         self.panel.write_at(l, line=1)
-        self.panel.write_at(chr(LCD05.CH_ARROW_LEFT) + ' ' * (self.panel.width - 2) + chr(LCD05.CH_ARROW_RIGHT), line=4)
+        self.panel.write_at(chr(CH_ARROW_LEFT) + ' ' * (self.panel.width - 2) + chr(CH_ARROW_RIGHT), line=4)
 
     def handle_choice(self):
         """ Lets the user browse the options using the arrow keys, executes the action attached
@@ -136,11 +171,8 @@ class Selector(object):
                 return True
 
             elif key == Keys.OK:
-                action_handler = choice_descriptor[1]
-                if callable(action_handler):
-                    return action_handler()
-                else:
-                    raise ValueError("handler attached to action '%s' is not a callable" % action_label)
+                self.panel.leds_off()
+                return choice_descriptor[1]()
 
             elif key == Keys.PREVIOUS:
                 self.choice = (self.choice - 1) % self.choices_count
