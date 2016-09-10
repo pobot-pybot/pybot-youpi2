@@ -14,7 +14,7 @@ from pybot.dspin.demo import DSPINDemo, CursesHandler
 from pybot.dspin.defs import Status, Configuration
 from pybot.dspin import real_raspi
 
-from .arm import YoupiArm, YoupiArmError, OutOfBoundError
+from .model import YoupiArm, YoupiArmError, OutOfBoundError
 
 
 __author__ = 'Eric Pascual'
@@ -24,7 +24,7 @@ MenuOption = namedtuple('MenuOption', 'selector, label, handler')
 
 
 class YoupiDemo(DSPINDemo):
-    """ dSPIN controlled Youpi.
+    """ Text based demonstration of a dSPIN controlled Youpi.
 
     Shows various features of the daisy-chain management and Youpi specific
     features.
