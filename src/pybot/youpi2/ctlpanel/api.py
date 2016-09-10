@@ -186,6 +186,17 @@ class ControlPanel(object):
         self.center_text_at(msg, 2)
         self.center_text_at("in progress...", 3)
 
+    def please_wait(self, msg):
+        """ Displays a 'please wait''' message, centered on the LCD.
+
+        :param str msg: the task in progress
+        """
+        self.clear()
+        self.leds_off()
+        self.center_text_at(msg, 1)
+        self.center_text_at('...', 2)
+        self.center_text_at("Please wait", 4)
+
     def wait_for_key(self, valid=None):
         """ Waits for a key to be pressed and returns it.
 
