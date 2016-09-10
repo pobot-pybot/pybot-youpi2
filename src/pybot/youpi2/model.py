@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
+""" Classes implementing the models of the motors and the arm. """
+
 import time
 
 from pybot.dspin import defs, real_raspi, GPIO
-from pybot.dspin.core import DSPinSpiDev
+from pybot.dspin.core import DSPinSpiDev, CommandTimeOut
 from pybot.dspin.daisychain import DaisyChain
 from pybot.dspin.defs import Register
 
@@ -13,22 +15,31 @@ __author__ = 'Eric Pascual'
 
 
 class MotorSettings(object):
-    STEPS_PER_TURN = 200
-    GEAR_RATIO = 32
-    MIN_POS_DEG = None
-    MAX_POS_DEG = None
+    """ Base class of holder objects for the settings of a given stepper motor
+    and the joint it actuates.
 
-    micro_steps = 128
-    max_speed = 750
-    min_speed = 100
-    fs_spd = 200
-    acc = 0x7f
-    dec = 0x7f
-    ovd_th = defs.OverCurrentThreshold.TH_1500mA
-    kval_run = 0x7f
-    kval_acc = 0x7f
-    kval_dec = 0x7f
-    kval_hold = 0x0f
+    It provides defaults values for the settings (refer to L6470 datasheet for
+    the values documentation) and a couple of convenience methods too.
+
+    The settings can be tuned for specific motors by sub-classing and overriding
+    the required attributes.
+    """
+    STEPS_PER_TURN = 200    #: number of steps per motor turn
+    GEAR_RATIO = 32         #: gear ratio of joint transmission
+    MIN_POS_DEG = None      #: lowest position of the joint
+    MAX_POS_DEG = None      #: highest position of the joint
+
+    micro_steps = 128       #: motor micro-stepping
+    max_speed = 750         #: maximum motor speed
+    min_speed = 100         #: minimum motor speed
+    fs_spd = 200            #: full/micro steps switching speed threshold
+    acc = 0x7f              #: acceleration
+    dec = 0x7f              #: deceleration
+    ovd_th = defs.OverCurrentThreshold.TH_1500mA    #: over-current limit
+    kval_run = 0x7f         #: constant speed phases PWM setting
+    kval_acc = 0x7f         #: acceleration phases PWM setting
+    kval_dec = 0x7f         #: deceleration phases PWM setting
+    kval_hold = 0x0f        #: position hold phases PWM setting
 
     def __str__(self):
         return "STEPS_PER_TURN=%d GEAR_RATIO=%d micro_steps=%d max_speed=%d min_speed=%d fs_spd=0x%x " \
@@ -39,13 +50,18 @@ class MotorSettings(object):
         )
 
     def degrees_to_steps(self, deg):
+        """ Converts a number of joint degrees into the equivalent motor steps, taking in account
+        the motor steps per turn, the gear ratio of the joint transmission and the micro-stepping
+        setting of the motor."""
         return int(deg * self.micro_steps * self.STEPS_PER_TURN * self.GEAR_RATIO / 360.)
 
     def steps_to_degrees(self, steps):
+        """ Inverse of :py:meth:`degrees_to_steps` """
         return steps * 360. / self.micro_steps / self.STEPS_PER_TURN / self.GEAR_RATIO
 
 
 class BaseMotorSettings(MotorSettings):
+    """ Settings for the arm base rotation motor """
     GEAR_RATIO = 27
     MIN_POS_DEG = -180
     MAX_POS_DEG = 175
@@ -54,6 +70,7 @@ class BaseMotorSettings(MotorSettings):
 
 
 class ShoulderMotorSettings(MotorSettings):
+    """ Settings for the arm shoulder motor """
     max_speed = 500
 
     MIN_POS_DEG = -75
@@ -61,6 +78,7 @@ class ShoulderMotorSettings(MotorSettings):
 
 
 class ElbowMotorSettings(MotorSettings):
+    """ Settings for the arm elbow motor """
     max_speed = 500
 
     MIN_POS_DEG = -85
@@ -68,6 +86,7 @@ class ElbowMotorSettings(MotorSettings):
 
 
 class WristMotorSettings(MotorSettings):
+    """ Settings for the arm wrist motor """
     max_speed = 600
 
     MIN_POS_DEG = -90
@@ -75,6 +94,10 @@ class WristMotorSettings(MotorSettings):
 
 
 class HandRotationMotorSettings(MotorSettings):
+    """ Settings for the arm hand rotation motor.
+
+    Even if this joint has no physical rotation limits,
+    we impose logical ones for convenience."""
     max_speed = 800
 
     MIN_POS_DEG = -180
@@ -82,6 +105,8 @@ class HandRotationMotorSettings(MotorSettings):
 
 
 class GripperMotorSettings(MotorSettings):
+    """ Settings for the arm gripper motor.
+    """
     GEAR_RATIO = 1
     micro_steps = 1
 
@@ -102,13 +127,20 @@ class GripperMotorSettings(MotorSettings):
     turns = 28
 
     def __init__(self, **kwargs):
+        """ Defines the step count for the full range open action."""
         super(GripperMotorSettings, self).__init__(**kwargs)
 
         self.open_steps = int(self.turns * self.STEPS_PER_TURN * self.micro_steps)
-        self.close_speed = 800
 
 
 class YoupiArm(DaisyChain):
+    """ The arm model is based on the daisy chain one, and defines the settings of
+     its steppers.
+
+     It provides a collection of high level methods for performing the various actions,
+     including the support for the mechanical coupling of the joints, introduced by the
+     architecture of the motions transmission.
+     """
     DEFAULT_STANDBY_PIN = 11
     DEFAULT_BUSYN_PIN = 13
 
@@ -131,11 +163,10 @@ class YoupiArm(DaisyChain):
     JOINT_PARENTS = [None, None, MOTOR_SHOULDER, MOTOR_ELBOW, -MOTOR_WRIST, None]
 
     def __init__(self, spi_bus=0, spi_dev=0, logger=None):
-
         """
         :param int spi_bus: the number of the SPI bus used
         :param int spi_dev: the id of the device on the SPI bus
-        :param int log_level: logging level
+        :param logger: optional logger
         """
         super(YoupiArm, self).__init__(
             chain_length=self.MOTORS_COUNT,
@@ -217,7 +248,10 @@ class YoupiArm(DaisyChain):
             return
 
         if not emergency:
-            self.open_gripper()
+            try:
+                self.open_gripper()
+            except CommandTimeOut:
+                self.logger.error('timeout while waiting for gripper opening completion')
 
         super(YoupiArm, self).shutdown()
 
@@ -308,27 +342,42 @@ class YoupiArm(DaisyChain):
 
         initial_switch_state = self.switch_is_closed[motor]
 
+        def timeout_abort(action):
+            msg = "time out while %s motor %s origin" % (action, self.MOTOR_NAMES[motor])
+            self.logger.error(msg)
+            raise CommandTimeOut(msg)
+
         direction = defs.Direction.REV if initial_switch_state else defs.Direction.FWD
         self.run(*self.expand_parameters({
             motor: (
                 direction,
                 self.settings[motor].max_speed)
         }))
-        while self.switch_is_closed[motor] == initial_switch_state:
-            time.sleep(0.1)
-
-        self.soft_stop([motor])
+        time_limit = time.time() + self.MOVE_TIMEOUT
+        try:
+            while self.switch_is_closed[motor] == initial_switch_state:
+                if time.time() >= time_limit:
+                    timeout_abort('seeking')
+                time.sleep(0.1)
+        finally:
+            self.soft_stop([motor])
 
         self.run(*self.expand_parameters({
             motor: (
                 defs.Direction.invert(direction),
                 self.settings[motor].min_speed)
         }))
-        while self.switch_is_closed[motor] != initial_switch_state:
-            time.sleep(0.1)
-        self.hard_stop([motor])
-
-        self.reset_pos([motor])
+        try:
+            while self.switch_is_closed[motor] != initial_switch_state:
+                if time.time() >= time_limit:
+                    timeout_abort('backing to')
+                time.sleep(0.1)
+        except CommandTimeOut:
+            self.hard_stop([motor])
+            raise
+        else:
+            self.hard_stop([motor])
+            self.reset_pos([motor])
 
     def rotate_hand(self, angle, wait=True, wait_cb=None):
         """ Rotates the hand by a given angle.
@@ -468,8 +517,9 @@ class YoupiArm(DaisyChain):
         :param bool wait: True if blocking call
         :param wait_cb: an optional callback o be invoked while waiting in blocking mode
         :param bool coupled: True for taking the coupling in account (default: False)
+
         :raise: OutOfBoundError if the requested move would push one of more joints outside of
-        their limits
+                their limits
         """
         angles = self._normalize_angles_parameter(angles)
 
