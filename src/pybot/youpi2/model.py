@@ -343,8 +343,8 @@ class YoupiArm(DaisyChain):
         initial_switch_state = self.switch_is_closed[motor]
 
         def timeout_abort(action):
-            msg = "time out while %s %s motor origin" % (action, self.MOTOR_NAMES[motor])
-            self.logger.error(msg)
+            msg = "%s %s motor origin" % (action, self.MOTOR_NAMES[motor])
+            self.logger.error("time out while " + msg)
             raise CommandTimeOut(msg)
 
         direction = defs.Direction.REV if initial_switch_state else defs.Direction.FWD
