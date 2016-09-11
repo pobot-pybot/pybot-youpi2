@@ -20,6 +20,7 @@ __author__ = 'Eric Pascual'
 class YoupiApplication(object):
     NAME = 'app'
     TITLE = "Youpi application"
+    VERSION = None
 
     def __init__(self):
         log_cfg = log.get_logging_configuration({
@@ -51,9 +52,17 @@ class YoupiApplication(object):
         self.terminated = True
 
     def run(self, args):
+        self.logger.info('-' * 40)
+        self.logger.info('started')
+
+        if self.VERSION:
+            self.logger.info('version: %s', self.VERSION)
+        self.logger.info('-' * 40)
+
         self.logger.info('creating control panel device (path=%s)', args.pnldev)
         self.pnl = ControlPanel(FileSystemDevice(args.pnldev))
 
+        self.logger.info('getting access to the arm nROS node (name=%s)', args.arm_node_name)
         arm_node = get_node_proxy(get_bus(), args.arm_node_name, object_path=SERVICE_OBJECT_PATH)
         self.arm = get_node_interface(arm_node, interface_name=ARM_CONTROL_INTERFACE_NAME)
 
