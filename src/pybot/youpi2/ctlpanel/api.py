@@ -125,6 +125,8 @@ class ControlPanel(object):
         if blink:
             if self._blinker_thread:
                 return
+            self._blinker_thread = threading.Thread(target=_blink_leds)
+            self._blinker_thread.start()
         else:
             self.leds = leds_mask
 
