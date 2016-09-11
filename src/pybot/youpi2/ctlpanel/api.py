@@ -201,6 +201,13 @@ class ControlPanel(object):
 
     def scroll_text(self, text, speed=2, end_delay=3, blink=False):
         """ Scrolls a text and waits at the end before returning.
+
+        :param text: the lines of text, either as a list of strings or as a single
+                string containing newlines
+        :param int speed: the scrolling speed, in lines per second (must be > 0).
+        :param int end_delay: the number of seconds to wait before returning.
+                If < 0, a key wait is used instead of a time delay.
+        :param bool blink: see :py:meth:``wait_for_key``
         """
         if isinstance(text, basestring):
             lines = text.splitlines()
@@ -208,6 +215,9 @@ class ControlPanel(object):
             lines = text
         else:
             raise TypeError('invalid text type')
+
+        if speed <= 0:
+            raise ValueError('invalid scroll speed')
 
         # fall back to display_splash if the text is shorter that the LCD
         if len(lines) <= self.height:
