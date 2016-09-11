@@ -75,15 +75,16 @@ class YoupiApplication(object):
             self.logger.info('invoking setup')
             self.setup(**args.__dict__)
         except Exception as e:
-            self.logger.error(e)
+            self.logger.exception(e)
             self.run_error(e)
             return 1
 
         exit_code = 0
         try:
             self.logger.info('starting loop')
-            while not self.terminated:
-                self.loop()
+            loop_stop = False
+            while not self.terminated and not loop_stop:
+                loop_stop = self.loop()
         except Exception as e:
             self.logger.exception(e)
             self.unexpected_error(e)
