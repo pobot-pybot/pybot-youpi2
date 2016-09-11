@@ -76,7 +76,7 @@ class YoupiApplication(object):
             while not self.terminated:
                 self.loop()
         except Exception as e:
-            self.logger.error(e)
+            self.logger.exception(e)
             self.unexpected_error(e)
             exit_code = 1
         finally:
