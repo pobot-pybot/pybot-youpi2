@@ -163,7 +163,7 @@ class YoupiArm(DaisyChain):
     JOINT_PARENTS = [None, None, MOTOR_SHOULDER, MOTOR_ELBOW, -MOTOR_WRIST, None]
 
     class TimeOuts(object):
-        DEFAULT = 30,
+        DEFAULT = 30
 
         OPEN_GRIPPER = 10
         CLOSE_GRIPPER = 20
