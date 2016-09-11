@@ -199,11 +199,12 @@ class ControlPanel(object):
         else:
             self.wait_for_key(blink=blink)
 
-    def scroll_text(self, text, speed=2, end_delay=3, blink=False):
+    def scroll_text(self, text, from_bottom=True, speed=2, end_delay=3, blink=False):
         """ Scrolls a text and waits at the end before returning.
 
         :param text: the lines of text, either as a list of strings or as a single
                 string containing newlines
+        :param bool from_bottom: if True, the text appears from the bottom of the screen
         :param int speed: the scrolling speed, in lines per second (must be > 0).
         :param int end_delay: the number of seconds to wait before returning.
                 If < 0, a key wait is used instead of a time delay.
@@ -224,9 +225,8 @@ class ControlPanel(object):
             self.display_splash(lines, delay=end_delay, blink=blink)
             return
 
-        # insert blank lines at beginning to make the text appear at the bottom of
-        # the display
-        lines = [''] * (self.height - 1) + lines
+        if from_bottom:
+            lines = [''] * (self.height - 1) + lines
 
         start_line = 0
         stop_at_line = len(lines) - self.height
