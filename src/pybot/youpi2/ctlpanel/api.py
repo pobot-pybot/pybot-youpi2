@@ -2,6 +2,7 @@
 
 import time
 import string
+import threading
 
 import evdev
 
@@ -96,15 +97,44 @@ class ControlPanel(object):
     def leds(self, state):
         self._device.set_leds_state(state)
 
-    def set_leds(self, keys=None):
+    _blinker_thread = None
+    _blinker_terminate_event = None
+
+    def set_leds(self, keys=None, blink=True):
         """ Turns a set of LEDs on.
 
         .. seealso:: :py:meth:`Keys.mask` for parameter definition.
+
+        :param set keys: the LED(s) to be turned on
+        :param bool blink: if True, blink the LED(s) instead of steady on
         """
-        self.leds = ~Keys.mask(keys) & 0x0f
+        leds_mask = ~Keys.mask(keys) & 0x0f
+
+        def _blink_leds():
+            self._blinker_terminate_event = threading.Event()
+            state = leds_mask
+            next_change = time.time()
+            while not self._blinker_terminate_event.is_set():
+                if time.time() >= next_change:
+                    self.leds = state
+                    state = 0 if state else leds_mask
+                    next_change += 0.5
+
+                time.sleep(0.1)
+
+        if blink:
+            if self._blinker_thread:
+                return
+        else:
+            self.leds = leds_mask
 
     def leds_off(self):
         """ Convenience function for turning all the LEDs off. """
+        if self._blinker_thread:
+            self._blinker_terminate_event.set()
+            self._blinker_thread.join(1)
+            self._blinker_thread = self._blinker_terminate_event = None
+
         self.leds = 0
 
     def is_locked(self):
@@ -222,7 +252,7 @@ class ControlPanel(object):
                 if is_locked:
                     self.leds_off()
                 else:
-                    self.set_leds(valid)
+                    self.set_leds(valid, blink=True)
                 self.was_locked = is_locked
 
             keys = self.get_keys()
