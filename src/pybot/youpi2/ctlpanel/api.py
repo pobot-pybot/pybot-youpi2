@@ -166,7 +166,7 @@ class ControlPanel(object):
     def clear(self):
         self._device.clear()
 
-    def display_splash(self, text, delay=3):
+    def display_splash(self, text, delay=3, blink=False):
         """ Displays a page of text and waits before returning.
 
         If a wait is provided (as a number of seconds) the method waits
@@ -176,6 +176,7 @@ class ControlPanel(object):
         :param str text: the lines of text, separated by newlines (`0x0a`)
         :param int delay: the number of seconds to wait before returning.
                 If < 0, a key wait is used instead of a time delay.
+        :param bool blink: see :py:meth:``wait_for_key``
         """
         self.clear()
         for i, line in enumerate(text.split('\n', 3)):
@@ -185,7 +186,7 @@ class ControlPanel(object):
             if delay:
                 time.sleep(delay)
         else:
-            self.wait_for_key()
+            self.wait_for_key(blink=blink)
 
     def center_text_at(self, s, line, fill_char=' '):
         """ Convenience method to write a centered text on a given line.
