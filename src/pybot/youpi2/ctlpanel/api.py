@@ -100,7 +100,7 @@ class ControlPanel(object):
     _blinker_thread = None
     _blinker_terminate_event = None
 
-    def set_leds(self, keys=None, blink=True):
+    def set_leds(self, keys=None, blink=False):
         """ Turns a set of LEDs on.
 
         .. seealso:: :py:meth:`Keys.mask` for parameter definition.
@@ -138,6 +138,10 @@ class ControlPanel(object):
             self._blinker_thread = self._blinker_terminate_event = None
 
         self.leds = 0
+
+    def blink_leds(self, keys=None):
+        """ Shorthand for :py:meth:``set_leds`` with blink option set """
+        self.set_leds(keys=keys, blink=True)
 
     def is_locked(self):
         """ Tells if the lock switch is on or off.
@@ -358,7 +362,7 @@ class ControlPanel(object):
         abort_keys = {Keys.ESC}
         if can_abort:
             self.center_text_at("ESC : Cancel", 4)
-            self.set_leds(Keys.ESC)
+            self.blink_leds(Keys.ESC)
 
         refresh_time = now = time.time()
         end_time = now + delay
@@ -432,7 +436,7 @@ class ControlPanel(object):
                 self.leds_off()
             else:
                 self.center_text_at(msg, line=line)
-                self.set_leds(Keys.ALL)
+                self.blink_leds(Keys.ALL)
 
             self.was_locked = is_locked
 
@@ -448,7 +452,7 @@ class ControlPanel(object):
                 self.leds_off()
             else:
                 self.center_text_at(msg % {'key': '-'.join([Keys.names[k] for k in keys])}, line=line)
-                self.set_leds(keys)
+                self.blink_leds(keys)
 
             self.was_locked = is_locked
 
