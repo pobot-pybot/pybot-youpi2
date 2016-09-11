@@ -8,6 +8,9 @@ import logging.config
 from pybot.core import cli
 from pybot.core import log
 
+from nros.core.commons import get_bus, get_node_proxy, get_node_interface
+from nros.youpi2 import SERVICE_OBJECT_PATH, ARM_CONTROL_INTERFACE_NAME
+
 from pybot.youpi2.ctlpanel import ControlPanel
 from pybot.youpi2.ctlpanel.devices.fs import FileSystemDevice
 
@@ -22,7 +25,7 @@ class YoupiApplication(object):
         log_cfg = log.get_logging_configuration({
             'handlers': {
                 'file': {
-                    'filename': os.path.expanduser('~/youpi2-%s.log' % self.NAME)
+                    'filename': log.log_file_path('youpi2-%s.log' % self.NAME)
                 }
             },
             'root': {
@@ -33,12 +36,13 @@ class YoupiApplication(object):
         self.logger = log.getLogger(self.__class__.__name__)
 
         self.pnl = None
+        self.arm = None
         self.terminated = False
 
     def main(self):
         parser = cli.get_argument_parser()
         parser.add_argument('--pnldev', default="/mnt/lcdfs")
-        parser.add_argument('--armdev', default="/mnt/y2fs")
+        parser.add_argument('--arm-node-name', default="nros.youpi2")
 
         self.add_custom_arguments(parser)
         sys.exit(self.run(parser.parse_args()))
@@ -50,6 +54,9 @@ class YoupiApplication(object):
         self.logger.info('creating control panel device (path=%s)', args.pnldev)
         self.pnl = ControlPanel(FileSystemDevice(args.pnldev))
 
+        arm_node = get_node_proxy(get_bus(), args.arm_node_name, object_path=SERVICE_OBJECT_PATH)
+        self.arm = get_node_interface(arm_node, interface_name=ARM_CONTROL_INTERFACE_NAME)
+
         signal.signal(signal.SIGTERM, self.terminate)
 
         self.pnl.clear()
@@ -57,7 +64,7 @@ class YoupiApplication(object):
 
         try:
             self.logger.info('invoking setup')
-            self.setup()
+            self.setup(**args.__dict__)
         except Exception as e:
             self.logger.error(e)
             self.run_error(e)
@@ -82,7 +89,7 @@ class YoupiApplication(object):
     def add_custom_arguments(self, parser):
         pass
 
-    def setup(self):
+    def setup(self, **kwargs):
         pass
 
     def loop(self):
