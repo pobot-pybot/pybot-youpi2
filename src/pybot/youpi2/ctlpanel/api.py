@@ -229,7 +229,7 @@ class ControlPanel(object):
         self.center_text_at('...', 2)
         self.center_text_at("Please wait", 4)
 
-    def wait_for_key(self, valid=None):
+    def wait_for_key(self, valid=None, blink=False):
         """ Waits for a key to be pressed and returns it.
 
         In case of multiple presses (chord), only the first one is returned.
@@ -238,6 +238,7 @@ class ControlPanel(object):
         :param valid: an optional set or list of keys, if the expected one must
                       belong to a specific subset. Single values are accepted
                       and converted to a set
+        :param bool blink: if True, key(s) LED will blink instead of steady on
         :return: the pressed key
         :rtype: int
         :raises Interrupted: if an external signal has interrupted the wait
@@ -254,7 +255,7 @@ class ControlPanel(object):
                 if is_locked:
                     self.leds_off()
                 else:
-                    self.set_leds(valid, blink=True)
+                    self.set_leds(valid, blink=blink)
                 self.was_locked = is_locked
 
             keys = self.get_keys()
