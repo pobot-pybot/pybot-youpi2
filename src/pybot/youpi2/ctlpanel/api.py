@@ -173,13 +173,24 @@ class ControlPanel(object):
         before returning. If `WAIT_FOR_EVER` (or any negative delay) is passed,
         an infinite wait is done, ended by pressing one of the keypad keys.
 
-        :param str text: the lines of text, separated by newlines (`0x0a`)
+        The provided text is automatically truncated to the number of lines
+        which can be displayed on the LCD.
+
+        :param text: the lines of text, either as a list of strings or as a single
+                string containing newlines
         :param int delay: the number of seconds to wait before returning.
                 If < 0, a key wait is used instead of a time delay.
         :param bool blink: see :py:meth:``wait_for_key``
         """
+        if isinstance(text, basestring):
+            lines = text.splitlines()
+        elif isinstance(text, (list, tuple)):
+            lines = text
+        else:
+            raise TypeError('invalid text type')
+
         self.clear()
-        for i, line in enumerate(text.split('\n', 3)):
+        for i, line in ((i, line) for i, line in enumerate(lines) if i < self.height):
             self.center_text_at(line.strip(), i + 1)
 
         if delay >= 0:
@@ -187,6 +198,45 @@ class ControlPanel(object):
                 time.sleep(delay)
         else:
             self.wait_for_key(blink=blink)
+
+    def scroll_text(self, text, speed=2, end_delay=3, blink=False):
+        """ Scrolls a text and waits at the end before returning.
+        """
+        if isinstance(text, basestring):
+            lines = text.splitlines()
+        elif isinstance(text, (list, tuple)):
+            lines = text
+        else:
+            raise TypeError('invalid text type')
+
+        # fall back to display_splash if the text is shorter that the LCD
+        if len(lines) <= self.height:
+            self.display_splash(lines, delay=end_delay, blink=blink)
+            return
+
+        # insert blank lines at beginning to make the text appear at the bottom of
+        # the display
+        lines = [''] * (self.height - 1) + lines
+
+        start_line = 0
+        stop_at_line = len(lines) - self.height
+        scroll_delay = 1. / speed
+        while True:
+            for y in xrange(self.height):
+                self.center_text_at(lines[start_line + y].strip(), y + 1)
+
+            if start_line == stop_at_line:
+                break
+
+            time.sleep(scroll_delay)
+            start_line += 1
+
+        if end_delay >= 0:
+            if end_delay:
+                time.sleep(end_delay)
+        else:
+            self.wait_for_key(blink=blink)
+
 
     def center_text_at(self, s, line, fill_char=' '):
         """ Convenience method to write a centered text on a given line.
