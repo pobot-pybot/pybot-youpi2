@@ -162,6 +162,15 @@ class YoupiArm(DaisyChain):
     JOINT_CHILDREN = [None, MOTOR_ELBOW, MOTOR_WRIST, -MOTOR_HAND_ROT, None, None]
     JOINT_PARENTS = [None, None, MOTOR_SHOULDER, MOTOR_ELBOW, -MOTOR_WRIST, None]
 
+    class TimeOuts(object):
+        DEFAULT=30,
+
+        OPEN_GRIPPER = 10
+        CLOSE_GRIPPER = 20
+        CALIBRATE_GRIPPER = OPEN_GRIPPER + CLOSE_GRIPPER
+        SEEK_ORIGIN = 30
+        ROTATE_HAND = 30
+
     def __init__(self, spi_bus=0, spi_dev=0, logger=None):
         """
         :param int spi_bus: the number of the SPI bus used
@@ -255,11 +264,12 @@ class YoupiArm(DaisyChain):
 
         super(YoupiArm, self).shutdown()
 
-    def open_gripper(self, wait=True, wait_cb=None):
+    def open_gripper(self, wait=True, wait_cb=None, timeout=TimeOuts.OPEN_GRIPPER):
         """ Opens the gripper.
 
         :param bool wait: if True, wait until the motion is complete before returning to caller
         :param wait_cb: callback function which is called at the end of the motion
+        :param timeout: the maximum motion duration
         """
         if not real_raspi:
             self.logger.warn('not on a real RasPi => bypassing open_gripper')
@@ -267,15 +277,16 @@ class YoupiArm(DaisyChain):
 
         motors = [self.MOTOR_GRIPPER]
 
-        self.go_home(motors, wait, wait_cb)
+        self.go_home(motors, wait, wait_cb, timeout)
 
-    def close_gripper(self, wait=True, wait_cb=None):
+    def close_gripper(self, wait=True, wait_cb=None, timeout=TimeOuts.CLOSE_GRIPPER):
         """ Closes the gripper.
 
         The motion is automatically stopped when the object (if any) grasp is detected.
 
         :param bool wait: if True, wait until the motion is complete before returning to caller
         :param wait_cb: callback function which is called at the end of the motion
+        :param timeout: the maximum motion duration
         """
         if not real_raspi:
             self.logger.warn('not on a real RasPi => bypassing close_gripper')
@@ -290,9 +301,9 @@ class YoupiArm(DaisyChain):
                 defs.Direction.REV,
                 self.settings[self.MOTOR_GRIPPER].close_speed
             )
-        }), wait=wait, wait_cb=wait_cb)
+        }), wait=wait, wait_cb=wait_cb, timeout=timeout)
 
-    def calibrate_gripper(self, wait=True, wait_cb=None):
+    def calibrate_gripper(self, wait=True, wait_cb=None, timeout=TimeOuts.CALIBRATE_GRIPPER):
         """ Calibrates the gripper.
 
         The executed sequence consists in locating the end of the close motion, then opening
@@ -301,6 +312,7 @@ class YoupiArm(DaisyChain):
 
         :param bool wait: if True, wait until the motion is complete before returning to caller
         :param wait_cb: callback function which is called at the end of the motion
+        :param timeout: the maximum motion duration
         """
         if not real_raspi:
             self.logger.warn('not on a real RasPi => bypassing calibrate_gripper')
@@ -312,26 +324,28 @@ class YoupiArm(DaisyChain):
                 defs.Direction.FWD,
                 self.settings[self.MOTOR_GRIPPER].open_steps
             )
-        }), wait=wait, wait_cb=wait_cb)
+        }), wait=wait, wait_cb=wait_cb, timeout=timeout)
 
         self.reset_pos([self.MOTOR_GRIPPER])
 
-    def seek_origins(self, joint_sequence=None):
+    def seek_origins(self, joint_sequence=None, timeout=TimeOuts.SEEK_ORIGIN):
         """ Moves to the origins for a list of joints.
 
         The motions are done in the sequence of the provided joints list.
 
         :param list joint_sequence: the list of involved joints
+        :param timeout: the maximum motion duration
         """
         for motor in joint_sequence or range(self.MOTORS_COUNT):
-            self.seek_origin(motor)
+            self.seek_origin(motor, timeout=timeout)
 
-    def seek_origin(self, motor):
+    def seek_origin(self, motor, timeout=TimeOuts.SEEK_ORIGIN):
         """ Moves a given motor to its origin and resets its position register.
 
         .. note:: this is not done for the gripper since it is managed differently
 
         :param motor: id of the involved motor
+        :param timeout: the maximum motion duration
         """
         if not real_raspi:
             self.logger.warn('not on a real RasPi => bypassing seek_origin')
@@ -347,26 +361,36 @@ class YoupiArm(DaisyChain):
             self.logger.error("time out while " + msg)
             raise CommandTimeOut(msg)
 
+        # starts the motor in the appropriate direction to go towards the origin
         direction = defs.Direction.REV if initial_switch_state else defs.Direction.FWD
         self.run(*self.expand_parameters({
             motor: (
                 direction,
                 self.settings[motor].max_speed)
         }))
-        time_limit = time.time() + self.MOVE_TIMEOUT
+        # wait until the index is detected or the maximum allowed delay is expired,
+        # and abort the operation in this case
+        time_limit = time.time() + timeout
         try:
             while self.switch_is_closed[motor] == initial_switch_state:
                 if time.time() >= time_limit:
                     timeout_abort('seeking')
                 time.sleep(0.1)
         finally:
+            # use a soft sop to be sure we will slight pass the index
             self.soft_stop([motor])
 
+        # starts the motor to go back slowly to the index (we have overshot it
+        # since using a soft stop previously)
         self.run(*self.expand_parameters({
             motor: (
                 defs.Direction.invert(direction),
                 self.settings[motor].min_speed)
         }))
+
+        # wait until the index is detected again or the maximum allowed delay is expired,
+        # and abort the operation in this case
+        time_limit = time.time() + timeout
         try:
             while self.switch_is_closed[motor] != initial_switch_state:
                 if time.time() >= time_limit:
@@ -375,16 +399,18 @@ class YoupiArm(DaisyChain):
         except CommandTimeOut:
             self.hard_stop([motor])
             raise
-        else:
-            self.hard_stop([motor])
-            self.reset_pos([motor])
 
-    def rotate_hand(self, angle, wait=True, wait_cb=None):
+        # if here, we could complete the whole sequence successfully
+        self.hard_stop([motor])
+        self.reset_pos([motor])
+
+    def rotate_hand(self, angle, wait=True, wait_cb=None, timeout=TimeOuts.ROTATE_HAND):
         """ Rotates the hand by a given angle.
 
         :param int angle: the rotation angle, in degrees
         :param bool wait: if True, wait until the motion is complete before returning to caller
         :param wait_cb: callback function which is called at the end of the motion
+        :param timeout: the maximum motion duration
         """
         m_settings = self.settings[self.MOTOR_HAND_ROT]
         self.move(*self.expand_parameters({
@@ -392,21 +418,22 @@ class YoupiArm(DaisyChain):
                 defs.Direction.FWD if angle > 0 else defs.Direction.REV,
                 m_settings.degrees_to_steps(angle)
             )
-        }), wait=wait, wait_cb=wait_cb)
+        }), wait=wait, wait_cb=wait_cb, timeout=timeout)
 
-    def rotate_hand_to(self, angle, wait=True, wait_cb=None):
+    def rotate_hand_to(self, angle, wait=True, wait_cb=None, timeout=TimeOuts.ROTATE_HAND):
         """ Rotates the hand to a given angle.
 
         :param int angle: the target angle, in degrees
         :param bool wait: if True, wait until the motion is complete before returning to caller
         :param wait_cb: callback function which is called at the end of the motion
+        :param timeout: the maximum motion duration
         """
         m_settings = self.settings[self.MOTOR_HAND_ROT]
         self.goto(*self.expand_parameters({
             self.MOTOR_HAND_ROT: [
                 m_settings.degrees_to_steps(angle)
             ]
-        }), wait=wait, wait_cb=wait_cb)
+        }), wait=wait, wait_cb=wait_cb, timeout=timeout)
 
     @staticmethod
     def _normalize_angles_parameter(angles):
@@ -501,7 +528,7 @@ class YoupiArm(DaisyChain):
             if not settings.MIN_POS_DEG <= angle <= settings.MAX_POS_DEG:
                 raise OutOfBoundError("%s goal (%f) out of bounds" % (self.MOTOR_NAMES[motor], angle))
 
-    def joints_move(self, angles, wait=True, wait_cb=None, coupled=False):
+    def joints_move(self, angles, wait=True, wait_cb=None, coupled=False, timeout=TimeOuts.DEFAULT):
         """ Moves joints, either as independent motors or as mechanically coupled joints.
 
         In coupled mode, the real commands applied to the motors will take the coupling
@@ -517,6 +544,7 @@ class YoupiArm(DaisyChain):
         :param bool wait: True if blocking call
         :param wait_cb: an optional callback o be invoked while waiting in blocking mode
         :param bool coupled: True for taking the coupling in account (default: False)
+        :param timeout: the maximum motion duration
 
         :raise: OutOfBoundError if the requested move would push one of more joints outside of
                 their limits
@@ -536,14 +564,14 @@ class YoupiArm(DaisyChain):
             for m, a in angles.iteritems()
         })
 
-        self.move(*parms, wait=wait, wait_cb=wait_cb)
+        self.move(*parms, wait=wait, wait_cb=wait_cb, timeout=timeout)
 
-    def coupled_joints_move(self, angles, wait=True, wait_cb=None):
+    def coupled_joints_move(self, angles, wait=True, wait_cb=None, timeout=TimeOuts.DEFAULT):
         """ Shorthand for applying the coupling to a relative move.
         """
-        return self.joints_move(angles, wait=wait, wait_cb=wait_cb, coupled=True)
+        return self.joints_move(angles, wait=wait, wait_cb=wait_cb, coupled=True, timeout=timeout)
 
-    def joints_goto(self, angles, wait=True, wait_cb=None, coupled=False):
+    def joints_goto(self, angles, wait=True, wait_cb=None, coupled=False, timeout=TimeOuts.DEFAULT):
         """ Same as :py:meth:`joints_move` but for an absolute move
         """
         angles = self._normalize_angles_parameter(angles)
@@ -554,15 +582,15 @@ class YoupiArm(DaisyChain):
             m: [self.settings[m].degrees_to_steps(a)]
             for m, a in angles.iteritems()
         })
-        self.goto(*parms, wait=wait, wait_cb=wait_cb)
+        self.goto(*parms, wait=wait, wait_cb=wait_cb, timeout=timeout)
 
-    def coupled_joints_goto(self, angles, wait=True, wait_cb=None):
+    def coupled_joints_goto(self, angles, wait=True, wait_cb=None, timeout=TimeOuts.DEFAULT):
         """ Shorthand for applying the coupling to an absolute move.
 
         Using this method with result in the arm joints having the position specified
         in the parameters at the end of the motion.
         """
-        return self.joints_goto(angles, wait=wait, wait_cb=wait_cb, coupled=True)
+        return self.joints_goto(angles, wait=wait, wait_cb=wait_cb, coupled=True, timeout=timeout)
 
     def get_joint_positions(self):
         """ Returns the current position (in degrees) of the arm joints.
