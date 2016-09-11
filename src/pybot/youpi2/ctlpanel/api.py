@@ -308,29 +308,33 @@ class ControlPanel(object):
         if not isinstance(valid, (set, list, tuple)):
             valid = {valid}
 
-        self.clear_was_locked_status()
-        while self._active:
-            # update LEDs state if relevant
-            is_locked = self.is_locked()
-            if self.was_locked is None or self.was_locked != is_locked:
-                if is_locked:
-                    self.leds_off()
-                else:
-                    self.set_leds(valid, blink=blink)
-                self.was_locked = is_locked
+        try:
+            self.clear_was_locked_status()
+            while self._active:
+                # update LEDs state if relevant
+                is_locked = self.is_locked()
+                if self.was_locked is None or self.was_locked != is_locked:
+                    if is_locked:
+                        self.leds_off()
+                    else:
+                        self.set_leds(valid, blink=blink)
+                    self.was_locked = is_locked
 
-            keys = self.get_keys()
-            if keys:
-                k = keys.pop()
-                if k in valid:
-                    return k
+                keys = self.get_keys()
+                if keys:
+                    k = keys.pop()
+                    if k in valid:
+                        return k
 
-            time.sleep(self.KEYPAD_SCAN_PERIOD)
+                time.sleep(self.KEYPAD_SCAN_PERIOD)
 
-        # If arrived here, it means that the active flag has been cleared
-        # as the consequence of a termination signal.
-        # We notify this with the dedicated exception.
-        raise Interrupted()
+            # If arrived here, it means that the active flag has been cleared
+            # as the consequence of a termination signal.
+            # We notify this with the dedicated exception.
+            raise Interrupted()
+
+        finally:
+            self.leds_off()
 
     def countdown(self, msg, delay=3, can_abort=False):
         """ Displays a message with a countdown and exists when it reaches 0.
