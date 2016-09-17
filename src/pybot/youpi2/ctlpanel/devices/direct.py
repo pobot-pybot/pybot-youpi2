@@ -92,3 +92,6 @@ class ControlPanelDevice(LCD05):
         keypad_map[4] = ecodes.KEY_NEXT
 
         return keypad_map
+
+    def get_version(self):
+        return 'LCD05-%s' % super(ControlPanelDevice, self).get_version()
