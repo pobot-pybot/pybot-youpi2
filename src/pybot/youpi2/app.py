@@ -72,7 +72,7 @@ class YoupiApplication(object):
         self.pnl.center_text_at(self.TITLE, line=1)
 
         try:
-            self.logger.info('invoking setup')
+            self.logger.info('invoking application setup')
             self.setup(**args.__dict__)
         except Exception as e:
             self.logger.exception(e)
@@ -81,7 +81,7 @@ class YoupiApplication(object):
 
         exit_code = 0
         try:
-            self.logger.info('starting loop')
+            self.logger.info('starting application loop')
             loop_stop = False
             while not self.terminated and not loop_stop:
                 loop_stop = self.loop()
@@ -90,7 +90,7 @@ class YoupiApplication(object):
             self.unexpected_error(e)
             exit_code = 1
         finally:
-            self.logger.info('invoking teardown with exit_code=%s', exit_code)
+            self.logger.info('invoking application teardown with exit_code=%s', exit_code)
             self.teardown(exit_code)
 
         self.logger.info('returning with exit_code=%s', exit_code)
