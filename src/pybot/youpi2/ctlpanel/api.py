@@ -251,7 +251,6 @@ class ControlPanel(object):
         else:
             self.wait_for_key(blink=blink)
 
-
     def center_text_at(self, s, line, fill_char=' '):
         """ Convenience method to write a centered text on a given line.
 
