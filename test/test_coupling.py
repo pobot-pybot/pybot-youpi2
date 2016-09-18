@@ -80,5 +80,22 @@ class MotorToJointTestCase(unittest.TestCase):
         })
 
 
+class GlobalToLocalTestCase(unittest.TestCase):
+    def test_01(self):
+        _global = [10, 0, 0, 0, 0, 0]
+        _local = YoupiArm.global_to_local(_global)
+        self.assertEqual(_local, _global)
+
+    def test_02(self):
+        _global = [0, 10, 10, 10, -10, 0]
+        _local = YoupiArm.global_to_local(_global)
+        self.assertEqual(_local, [0, 10, 0, 0, 0, 0])
+
+    def test_03(self):
+        _global = [0, 10, 20, 30, -50, 0]
+        _local = YoupiArm.global_to_local(_global)
+        self.assertEqual(_local, [0, 10, 10, 10, -20, 0])
+
+
 if __name__ == '__main__':
     unittest.main()
