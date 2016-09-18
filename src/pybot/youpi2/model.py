@@ -449,10 +449,10 @@ class YoupiArm(DaisyChain):
         return angles
 
     @classmethod
-    def _apply_coupling(cls, angles):
-        """ Applies the compensation for joints mechanical coupling.
-
-        The passed angle set points dictionary is modified in place
+    def joint_to_motor(cls, angles):
+        """ Applies the compensation for joints mechanical coupling by converting (in place)
+        the joint angles contained in the dictionary into the corresponding motor angles, take
+        mechanical coupling of the motions transmission into account.
 
         .. Note::
 
@@ -461,17 +461,27 @@ class YoupiArm(DaisyChain):
             sorted list of motors because of the way joints are coupled. Iterating over
             keys does not ensure this order.
 
-        :param dict angles: the angles set points for involved motors
+        :param dict angles: the angles set points for involved joints
         """
-        for m in reversed(cls.MOTORS_ALL):
-            if m in angles:
-                m_angle = angles[m]
-                child = cls.JOINT_CHILDREN[m]
-                while child is not None:
-                    c_dir = -1 if child < 0 else +1
-                    child = abs(child)
-                    angles[child] = (angles[child] + c_dir * m_angle) if child in angles else c_dir * m_angle
-                    child = cls.JOINT_CHILDREN[child]
+        for m in [m for m in reversed(cls.MOTORS_ALL) if m in angles]:
+            m_angle = angles[m]
+            child = cls.JOINT_CHILDREN[m]
+            while child is not None:
+                c_dir = -1 if child < 0 else +1
+                child = abs(child)
+                angles[child] = (angles[child] + c_dir * m_angle) if child in angles else c_dir * m_angle
+                child = cls.JOINT_CHILDREN[child]
+
+    @classmethod
+    def motor_to_joint(cls, angles):
+        """ Performs the reverse operation of :py:meth:``joint_to_motor`` """
+        for m in [m for m in reversed(cls.MOTORS_ALL) if m in angles]:
+            m_angle = angles[m]
+            parent = cls.JOINT_PARENTS[m]
+            if parent is not None:
+                c_dir = -1 if parent < 0 else +1
+                parent = abs(parent)
+                angles[m] = m_angle - angles[parent] * c_dir
 
     @classmethod
     def _global_to_local(cls, angles):
@@ -552,7 +562,7 @@ class YoupiArm(DaisyChain):
         angles = self._normalize_angles_parameter(angles)
 
         if coupled:
-            self._apply_coupling(angles)
+            self.joint_to_motor(angles)
 
         self._check_limits(angles, rel_move=True)
 
@@ -576,7 +586,7 @@ class YoupiArm(DaisyChain):
         """
         angles = self._normalize_angles_parameter(angles)
         if coupled:
-            self._apply_coupling(angles)
+            self.joint_to_motor(angles)
         self._check_limits(angles, rel_move=False)
         parms = self.expand_parameters({
             m: [self.settings[m].degrees_to_steps(a)]
@@ -592,15 +602,28 @@ class YoupiArm(DaisyChain):
         """
         return self.joints_goto(angles, wait=wait, wait_cb=wait_cb, coupled=True, timeout=timeout)
 
-    def get_joint_positions(self):
-        """ Returns the current position (in degrees) of the arm joints.
+    def get_motor_positions(self):
+        """ Returns the current position (in degrees) of the motors.
+
+        The motor positions car be different from the joint ones, especially for the
+        joints which are downstream with respect to the motion transmission coupling.
 
         Positions are returned as an array, which index is the joint motor id.
 
-        :return: current joint positions
+        :return: current motors positions
         :rtype: array
         """
         return [self.settings[m].steps_to_degrees(s) for m, s in enumerate(self.ABS_POS)]
+
+    def get_joint_positions(self):
+        """ Returns the current position (in degrees) of the joints.
+
+        Positions are returned as an array, which index is the joint motor id.
+
+        :return: current motors positions
+        :rtype: array
+        """
+        raise NotImplementedError()
 
 
 class YoupiArmError(Exception):
