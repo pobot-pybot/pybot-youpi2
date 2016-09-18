@@ -2,8 +2,8 @@
 
 import sys
 import signal
-import os
 import logging.config
+import datetime
 
 from pybot.core import cli
 from pybot.core import log
@@ -17,24 +17,25 @@ from pybot.youpi2.ctlpanel.devices.fs import FileSystemDevice
 __author__ = 'Eric Pascual'
 
 
-class YoupiApplication(object):
+class YoupiApplication(log.LogMixin):
     NAME = 'app'
     TITLE = "Youpi application"
     VERSION = None
 
     def __init__(self):
-        log_cfg = log.get_logging_configuration({
-            'handlers': {
-                'file': {
-                    'filename': log.log_file_path('youpi2-%s.log' % self.NAME)
-                }
-            },
-            'root': {
-                'handlers': ['file']
-            }
-        })
-        logging.config.dictConfig(log_cfg)
-        self.logger = log.getLogger(self.__class__.__name__)
+        # log_cfg = log.get_logging_configuration({
+        #     'handlers': {
+        #         'file': {
+        #             'filename': log.log_file_path('youpi2-%s.log' % self.NAME)
+        #         }
+        #     },
+        #     'root': {
+        #         'handlers': ['file']
+        #     }
+        # })
+        # logging.config.dictConfig(log_cfg)
+        # self.logger = log.getLogger(self.__class__.__name__)
+        log.LogMixin.__init__(self, name='youpi2-' + self.NAME)
 
         self.pnl = None
         self.arm = None
@@ -52,17 +53,12 @@ class YoupiApplication(object):
         self.terminated = True
 
     def run(self, args):
-        self.logger.info('-' * 40)
-        self.logger.info('started')
+        self.log_starting_banner(self.VERSION)
 
-        if self.VERSION:
-            self.logger.info('version: %s', self.VERSION)
-        self.logger.info('-' * 40)
-
-        self.logger.info('creating control panel device (path=%s)', args.pnldev)
+        self.log_info('creating control panel device (path=%s)', args.pnldev)
         self.pnl = ControlPanel(FileSystemDevice(args.pnldev))
 
-        self.logger.info('getting access to the arm nROS node (name=%s)', args.arm_node_name)
+        self.log_info('getting access to the arm nROS node (name=%s)', args.arm_node_name)
         arm_node = get_node_proxy(get_bus(), args.arm_node_name, object_path=SERVICE_OBJECT_PATH)
         self.arm = get_node_interface(arm_node, interface_name=ARM_CONTROL_INTERFACE_NAME)
 
@@ -72,28 +68,28 @@ class YoupiApplication(object):
         self.pnl.center_text_at(self.TITLE, line=1)
 
         try:
-            self.logger.info('invoking application setup')
+            self.log_info('invoking application setup')
             self.setup(**args.__dict__)
         except Exception as e:
-            self.logger.exception(e)
-            self.run_error(e)
+            self.log_exception(e)
+            self.on_run_error(e)
             return 1
 
         exit_code = 0
         try:
-            self.logger.info('starting application loop')
+            self.log_info('starting application loop')
             loop_stop = False
             while not self.terminated and not loop_stop:
                 loop_stop = self.loop()
         except Exception as e:
-            self.logger.exception(e)
-            self.unexpected_error(e)
+            self.log_exception(e)
+            self.on_unexpected_error(e)
             exit_code = 1
         finally:
-            self.logger.info('invoking application teardown with exit_code=%s', exit_code)
+            self.log_info('invoking application teardown with exit_code=%s', exit_code)
             self.teardown(exit_code)
 
-        self.logger.info('returning with exit_code=%s', exit_code)
+        self.log_info('returning with exit_code=%s', exit_code)
         return exit_code
 
     def add_custom_arguments(self, parser):
@@ -108,10 +104,10 @@ class YoupiApplication(object):
     def teardown(self, exit_code):
         pass
 
-    def run_error(self, e):
+    def on_run_error(self, e):
         pass
 
-    def unexpected_error(self, e):
+    def on_unexpected_error(self, e):
         pass
 
 
