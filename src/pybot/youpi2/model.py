@@ -484,7 +484,7 @@ class YoupiArm(DaisyChain):
                 angles[m] = m_angle - angles[parent] * c_dir
 
     @classmethod
-    def _global_to_local(cls, angles):
+    def global_to_local(cls, angles):
         """ Converts joint angles to their relative (aka local) value.
 
         :param list angles: the angles to convert
@@ -527,7 +527,7 @@ class YoupiArm(DaisyChain):
             for j, a in angles.iteritems():
                 goals[j] = a
 
-        local_angles = self._global_to_local(goals)
+        local_angles = self.global_to_local(goals)
         if self.logger.getEffectiveLevel() == log.DEBUG:
             self.logger.debug('_check_limits: glb=%s loc=%s)', goals, local_angles)
 
@@ -611,7 +611,7 @@ class YoupiArm(DaisyChain):
         Positions are returned as an array, which index is the joint motor id.
 
         :return: current motors positions
-        :rtype: array
+        :rtype: list
         """
         return [self.settings[m].steps_to_degrees(s) for m, s in enumerate(self.ABS_POS)]
 
@@ -620,10 +620,10 @@ class YoupiArm(DaisyChain):
 
         Positions are returned as an array, which index is the joint motor id.
 
-        :return: current motors positions
-        :rtype: array
+        :return: current joints positions
+        :rtype: list
         """
-        raise NotImplementedError()
+        return self.global_to_local(self.get_motor_positions())
 
 
 class YoupiArmError(Exception):
