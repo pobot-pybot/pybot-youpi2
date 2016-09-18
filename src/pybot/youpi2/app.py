@@ -2,8 +2,6 @@
 
 import sys
 import signal
-import logging.config
-import datetime
 
 from pybot.core import cli
 from pybot.core import log
@@ -23,19 +21,9 @@ class YoupiApplication(log.LogMixin):
     VERSION = None
 
     def __init__(self):
-        # log_cfg = log.get_logging_configuration({
-        #     'handlers': {
-        #         'file': {
-        #             'filename': log.log_file_path('youpi2-%s.log' % self.NAME)
-        #         }
-        #     },
-        #     'root': {
-        #         'handlers': ['file']
-        #     }
-        # })
-        # logging.config.dictConfig(log_cfg)
-        # self.logger = log.getLogger(self.__class__.__name__)
-        log.LogMixin.__init__(self, name='youpi2-' + self.NAME)
+        log_name = 'youpi2-' + self.NAME
+        log.setup_logging(log_name=log_name)
+        log.LogMixin.__init__(self, name=log_name)
 
         self.pnl = None
         self.arm = None
