@@ -57,6 +57,7 @@ class YoupiApplication(log.LogMixin):
         self.pnl.clear()
         self.pnl.center_text_at(self.TITLE, line=1)
 
+        exit_code = 0
         try:
             self.log_info('invoking application setup')
             self.setup(**args.__dict__)
@@ -65,23 +66,22 @@ class YoupiApplication(log.LogMixin):
             self.on_run_error(e)
 
             self.pnl.display_error(e)
-            return 1
-
-        exit_code = 0
-        try:
-            self.log_info('starting application loop')
-            loop_stop = False
-            while not self.terminated and not loop_stop:
-                loop_stop = self.loop()
-        except Exception as e:
-            self.log_exception(e)
-            self.on_unexpected_error(e)
-
-            self.pnl.display_error(e)
             exit_code = 1
-        finally:
-            self.log_info('invoking application teardown with exit_code=%s', exit_code)
-            self.teardown(exit_code)
+        else:
+            try:
+                self.log_info('starting application loop')
+                loop_stop = False
+                while not self.terminated and not loop_stop:
+                    loop_stop = self.loop()
+            except Exception as e:
+                self.log_exception(e)
+                self.on_unexpected_error(e)
+
+                self.pnl.display_error(e)
+                exit_code = 1
+            finally:
+                self.log_info('invoking application teardown with exit_code=%s', exit_code)
+                self.teardown(exit_code)
 
         self.log_info('returning with exit_code=%s', exit_code)
         return exit_code
