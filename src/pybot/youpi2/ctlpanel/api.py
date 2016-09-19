@@ -7,6 +7,7 @@ import threading
 import evdev
 
 from .keys import Keys
+from .widgets import CH_OK
 
 __author__ = 'Eric Pascual'
 
@@ -202,6 +203,21 @@ class ControlPanel(object):
                 time.sleep(delay)
         else:
             self.wait_for_key(blink=blink)
+
+    def display_error(self, e):
+        """ Displays an error message.
+
+        If an exception is passed, displays its message.
+        """
+        self.clear()
+
+        self.write_at('ERROR'.center(self.width)[:-1] + chr(CH_OK), line=1)
+
+        msg = str(e)
+        self.write_at(msg[:20], line=3)
+        self.write_at(msg[20:40], line=4)
+
+        self.wait_for_key([Keys.OK])
 
     def scroll_text(self, text, from_bottom=True, speed=2, end_delay=3, blink=False):
         """ Scrolls a text and waits at the end before returning.
