@@ -76,6 +76,8 @@ class YoupiApplication(log.LogMixin):
         except Exception as e:
             self.log_exception(e)
             self.on_unexpected_error(e)
+
+            self.pnl.display_error(e)
             exit_code = 1
         finally:
             self.log_info('invoking application teardown with exit_code=%s', exit_code)
