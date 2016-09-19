@@ -585,12 +585,14 @@ class YoupiArm(DaisyChain):
         """ Same as :py:meth:`joints_move` but for an absolute move
         """
         angles = self._normalize_angles_parameter(angles)
+        goal_angles = {i: p for i, p in enumerate(self.get_joint_positions())}
+        goal_angles.update(angles)
         if coupled:
-            self.joint_to_motor(angles)
-        self._check_limits(angles, rel_move=False)
+            self.joint_to_motor(goal_angles)
+        self._check_limits(goal_angles, rel_move=False)
         parms = self.expand_parameters({
             m: [self.settings[m].degrees_to_steps(a)]
-            for m, a in angles.iteritems()
+            for m, a in goal_angles.iteritems()
         })
         self.goto(*parms, wait=wait, wait_cb=wait_cb, timeout=timeout)
 
