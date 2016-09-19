@@ -176,6 +176,18 @@ class YoupiArm(DaisyChain):
         SEEK_ORIGIN = 30
         ROTATE_HAND = 30
 
+    def motor_name(self, motor_id):
+        try:
+            return self.MOTOR_NAMES[motor_id]
+        except KeyError:
+            raise ValueError("invalid motor id (%s)" % motor_id)
+
+    def motor_id(self, motor_name):
+        try:
+            return self.MOTOR_NAMES.index(motor_name)
+        except ValueError:
+            raise ValueError("invalid motor name (%s)" % motor_name)
+
     def __init__(self, spi_bus=0, spi_dev=0, logger=None):
         """
         :param int spi_bus: the number of the SPI bus used
