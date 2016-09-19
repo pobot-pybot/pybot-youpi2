@@ -11,7 +11,7 @@ from pybot.core import log
 from nros.core.commons import get_bus, get_node_proxy, get_node_interface
 from nros.youpi2 import SERVICE_OBJECT_PATH, ARM_CONTROL_INTERFACE_NAME
 
-from pybot.youpi2.ctlpanel import ControlPanel, Keys
+from pybot.youpi2.ctlpanel import ControlPanel
 from pybot.youpi2.ctlpanel.devices.fs import FileSystemDevice
 
 __author__ = 'Eric Pascual'
@@ -39,15 +39,6 @@ class YoupiApplication(log.LogMixin):
         self.add_custom_arguments(parser)
         sys.exit(self.run(parser.parse_args()))
 
-    def display_error(self, e):
-        self.pnl.clear()
-        self.pnl.center_text_at('ERROR', 1)
-
-        msg = str(e)
-        self.pnl.write_at(msg[:20], line=3)
-        self.pnl.write_at(msg[20:40], line=4)
-        self.pnl.wait_for_key([Keys.OK])
-
     def terminate(self, *args):
         self.terminated = True
 
@@ -73,7 +64,7 @@ class YoupiApplication(log.LogMixin):
             self.log_exception(e)
             self.on_run_error(e)
 
-            self.display_error(e)
+            self.pnl.display_error(e)
             return 1
 
         exit_code = 0
