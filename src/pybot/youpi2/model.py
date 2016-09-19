@@ -176,15 +176,17 @@ class YoupiArm(DaisyChain):
         SEEK_ORIGIN = 30
         ROTATE_HAND = 30
 
-    def motor_name(self, motor_id):
+    @classmethod
+    def motor_name(cls, motor_id):
         try:
-            return self.MOTOR_NAMES[motor_id]
+            return cls.MOTOR_NAMES[motor_id]
         except KeyError:
             raise ValueError("invalid motor id (%s)" % motor_id)
 
-    def motor_id(self, motor_name):
+    @classmethod
+    def motor_id(cls, motor_name):
         try:
-            return self.MOTOR_NAMES.index(motor_name)
+            return cls.MOTOR_NAMES.index(motor_name)
         except ValueError:
             raise ValueError("invalid motor name (%s)" % motor_name)
 
