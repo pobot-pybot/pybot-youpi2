@@ -54,8 +54,8 @@ on bipolar power transistors for driving the motors has been replaced by modern 
 `STMicroelectronic L6470 <http://www.st.com/content/st_com/en/products/motor-drivers/stepper-motor-drivers/l6470.html>`_
 (aka dSPIN) smart stepper driver and the Raspberry Pi for the control layer.
 
-In addition, a control panel composed of a ̀
- serial I2C 4x20 character LCD <https://www.robot-electronics.co.uk/htm/Lcd05tech.htm>`_,
+In addition, a control panel composed of a
+`serial I2C 4x20 character LCD <https://www.robot-electronics.co.uk/htm/Lcd05tech.htm>`_,
  a small keypad with signaling LEDs equipped keys and a lock key switch has been added.
  It is used as the user interface for the shell control
 program in charge of supervising the whole system and managing the independant applications implementing
