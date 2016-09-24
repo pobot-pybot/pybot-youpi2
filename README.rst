@@ -6,10 +6,14 @@ A library for controlling a Youpi robotic arm.
 The Genesis
 ===========
 
+The origins
+-----------
+
 The Youpi robotic arm is an educational tool which has been distributed in France
 during the early 80ies for teaching the basics of robotics in technology oriented classes.
 
 .. image:: youpi-orig.jpg
+   :width: 50%
    :align: center
 
 It was supposed to be controlled by a personal computer built by the French maker
@@ -35,11 +39,12 @@ this has resulted in a 80ies flavoured `demonstrator <http://www.pobot.org/Le-ma
 presented during the French national scientific event (`Fête de la Science <http://www.fetedelascience.fr/>`_).
 
 .. image:: youpinitel.jpg
+   :width: 50%
    :align: center
 
 
-The present
-===========
+The modern days
+---------------
 
 As a sequel to the first demonstration presented above, a completely redesigned version of the arm
 has been developed.
@@ -49,7 +54,19 @@ on bipolar power transistors for driving the motors has been replaced by modern 
 `STMicroelectronic L6470 <http://www.st.com/content/st_com/en/products/motor-drivers/stepper-motor-drivers/l6470.html>`_
 (aka dSPIN) smart stepper driver and the Raspberry Pi for the control layer.
 
-This package provides the library layer exposing various high-level configuration and control methods
+In addition, a control panel composed of a serial I2C 4x20 character LCD, a small keypad with signaling LEDs
+equipped keys and a lock key switch has been added. It is used as the user interface for the shell control
+program in charge of supervising the whole system and managing the independant applications implementing
+various services (automated demonstration, manual control, Web sercices REST API,...).
+
+.. image:: youpi-new-generation.jpg
+   :width: 50%
+   :align: center
+
+The package
+===========
+
+It provides the library layer exposing various high-level configuration and control methods
 for using the arm in any type of application.
 
 Dependencies
