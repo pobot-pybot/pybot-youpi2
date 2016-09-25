@@ -434,7 +434,7 @@ class YoupiArm(DaisyChain):
         :param timeout: the maximum motion duration
         """
         m_settings = self.settings[self.MOTOR_HAND_ROT]
-        self.move(*self.expand_parameters({
+        self.joints_move(*self.expand_parameters({
             self.MOTOR_HAND_ROT: (
                 defs.Direction.FWD if angle > 0 else defs.Direction.REV,
                 m_settings.degrees_to_steps(angle)
@@ -450,7 +450,7 @@ class YoupiArm(DaisyChain):
         :param timeout: the maximum motion duration
         """
         m_settings = self.settings[self.MOTOR_HAND_ROT]
-        self.goto(*self.expand_parameters({
+        self.joints_goto(*self.expand_parameters({
             self.MOTOR_HAND_ROT: [
                 m_settings.degrees_to_steps(angle)
             ]
@@ -606,10 +606,14 @@ class YoupiArm(DaisyChain):
         """ Same as :py:meth:`joints_move` but for an absolute move
         """
         angles = self._normalize_angles_parameter(angles)
-        goal_angles = {i: p for i, p in enumerate(self.get_joint_positions())}
-        goal_angles.update(angles)
+
         if coupled:
+            goal_angles = {i: p for i, p in enumerate(self.get_joint_positions())}
+            goal_angles.update(angles)
             self.joint_to_motor(goal_angles)
+        else:
+            goal_angles = angles
+
         self._check_limits(goal_angles, rel_move=False)
         parms = self.expand_parameters({
             m: [self.settings[m].degrees_to_steps(a)]
