@@ -12,7 +12,6 @@ system.
 """
 
 import os
-import unicodedata
 
 __author__ = 'Eric Pascual'
 
@@ -129,8 +128,6 @@ class FileSystemDevice(object):
     def write_at(self, s, line=1, col=1):
         """ Convenience method to write a text at a given location.
 
-        Non ASCII letters (accents,...) are removed from the text, since not displayable.
-
         Arguments:
             s:
                 the text
@@ -140,9 +137,6 @@ class FileSystemDevice(object):
         self.write("\x1b[%d;%dH%s" % (line, col, s))
 
     def write(self, s):
-        nfkd = unicodedata.normalize('NFKD', s.decode('utf-8'))
-        s = ''.join([c for c in nfkd if not unicodedata.combining(c)])
-
         self._device_write(self._fp(self.F_DISPLAY), s)
 
     def get_keypad_state(self):
