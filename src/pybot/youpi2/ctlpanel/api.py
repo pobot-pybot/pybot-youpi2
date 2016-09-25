@@ -48,7 +48,7 @@ class ControlPanel(object):
         self._debug = debug
         self.was_locked = False
 
-        self._active = True
+        self._terminate_event = threading.Event()
 
         self._evdev = None
         for dev_path in evdev.list_devices():
@@ -58,13 +58,12 @@ class ControlPanel(object):
                 break
 
     def terminate(self):
-        """ Clears the active internal flag so that a currently running wait loop will
-        exit.
+        """ Sets the terminate event so that a currently running wait loop will exit.
 
         This is intended to be used by application signal handlers for a clean shutdown
         when a SIGTERM or SIGINT (or any specific termination signal) is received.
         """
-        self._active = False
+        self._terminate_event.set()
 
     @staticmethod
     def _check_device_type(device):
@@ -329,7 +328,7 @@ class ControlPanel(object):
 
         try:
             self.clear_was_locked_status()
-            while self._active:
+            while not self._terminate_event.is_set():
                 # update LEDs state if relevant
                 is_locked = self.is_locked()
                 if self.was_locked is None or self.was_locked != is_locked:
@@ -347,7 +346,7 @@ class ControlPanel(object):
 
                 time.sleep(self.KEYPAD_SCAN_PERIOD)
 
-            # If arrived here, it means that the active flag has been cleared
+            # If arrived here, it means that the terminate event has been set
             # as the consequence of a termination signal.
             # We notify this with the dedicated exception.
             raise Interrupted()
@@ -382,7 +381,7 @@ class ControlPanel(object):
         refresh_time = now = time.time()
         end_time = now + delay
         try:
-            while self._active:
+            while not self._terminate_event.is_set():
                 now = time.time()
                 if now >= end_time:
                     self.center_text_at("NOW", 2)
