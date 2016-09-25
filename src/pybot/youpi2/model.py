@@ -69,37 +69,39 @@ class BaseMotorSettings(MotorSettings):
     max_speed = 600
 
 
-class ShoulderMotorSettings(MotorSettings):
-    """ Settings for the arm shoulder motor """
+class ArmJointMotorSettings(MotorSettings):
+    """ These settings are shared by all the motors actuating
+    the arm joints.
+
+    It is used to fix a common maximum speed, so that the mechanical
+    coupling compensation moves are synchronized.
+    """
     max_speed = 500
 
+
+class ShoulderMotorSettings(ArmJointMotorSettings):
+    """ Settings for the arm shoulder motor """
     MIN_POS_DEG = -75
     MAX_POS_DEG = 115
 
 
-class ElbowMotorSettings(MotorSettings):
+class ElbowMotorSettings(ArmJointMotorSettings):
     """ Settings for the arm elbow motor """
-    max_speed = 500
-
     MIN_POS_DEG = -85
     MAX_POS_DEG = 125
 
 
-class WristMotorSettings(MotorSettings):
+class WristMotorSettings(ArmJointMotorSettings):
     """ Settings for the arm wrist motor """
-    max_speed = 600
-
     MIN_POS_DEG = -90
     MAX_POS_DEG = 115
 
 
-class HandRotationMotorSettings(MotorSettings):
+class HandRotationMotorSettings(ArmJointMotorSettings):
     """ Settings for the arm hand rotation motor.
 
     Even if this joint has no physical rotation limits,
     we impose logical ones for convenience."""
-    max_speed = 800
-
     MIN_POS_DEG = -180
     MAX_POS_DEG = 180
 
