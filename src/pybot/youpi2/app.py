@@ -8,8 +8,9 @@ from dbus.exceptions import DBusException
 from pybot.core import cli
 from pybot.core import log
 
-from nros.core.commons import get_bus, get_node_proxy, get_node_interface
-from nros.youpi2 import SERVICE_OBJECT_PATH, ARM_CONTROL_INTERFACE_NAME
+# from nros.core.commons import get_bus, get_node_proxy, get_node_interface
+# from nros.youpi2 import SERVICE_OBJECT_PATH, ARM_CONTROL_INTERFACE_NAME
+from nros.youpi2.client import ArmClient
 
 from pybot.youpi2.ctlpanel import ControlPanel
 from pybot.youpi2.ctlpanel.devices.fs import FileSystemDevice
@@ -42,6 +43,10 @@ class YoupiApplication(log.LogMixin):
     def terminate(self, *args):
         self.terminated = True
 
+    def clear_screen(self):
+        self.pnl.clear()
+        self.pnl.center_text_at(self.TITLE, line=1)
+
     def run(self, args):
         self.log_starting_banner(self.VERSION)
 
@@ -49,13 +54,13 @@ class YoupiApplication(log.LogMixin):
         self.pnl = ControlPanel(FileSystemDevice(args.pnldev))
 
         self.log_info('getting access to the arm nROS node (name=%s)', args.arm_node_name)
-        arm_node = get_node_proxy(get_bus(), args.arm_node_name, object_path=SERVICE_OBJECT_PATH)
-        self.arm = get_node_interface(arm_node, interface_name=ARM_CONTROL_INTERFACE_NAME)
+        # arm_node = get_node_proxy(get_bus(), args.arm_node_name, object_path=SERVICE_OBJECT_PATH)
+        # self.arm = get_node_interface(arm_node, interface_name=ARM_CONTROL_INTERFACE_NAME)
+        self.arm = ArmClient(args.arm_node_name)
 
         signal.signal(signal.SIGTERM, self.terminate)
 
-        self.pnl.clear()
-        self.pnl.center_text_at(self.TITLE, line=1)
+        self.clear_screen()
 
         exit_code = 0
         try:
@@ -80,6 +85,7 @@ class YoupiApplication(log.LogMixin):
                 self.pnl.display_error(e)
                 exit_code = 1
             finally:
+                self.clear_screen()
                 self.pnl.center_text_at('terminating', 3)
                 self.arm.soft_hi_Z()
                 self.logger.info('arm set in Hi-Z')
