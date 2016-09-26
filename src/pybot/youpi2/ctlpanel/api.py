@@ -327,6 +327,10 @@ class ControlPanel(object):
             valid = {valid}
 
         try:
+            # wait for all keys released
+            while not self._terminate_event.is_set() and self.get_keys():
+                time.sleep(self.KEYPAD_SCAN_PERIOD)
+
             self.clear_was_locked_status()
             while not self._terminate_event.is_set():
                 # update LEDs state if relevant
