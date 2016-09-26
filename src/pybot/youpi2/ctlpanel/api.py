@@ -22,7 +22,7 @@ class ControlPanel(object):
     Refer to the ``devices`` subpackage for the documentation of the provided
     implementations.
     """
-    KEYPAD_SCAN_PERIOD = 0.1
+    KEYPAD_SCAN_PERIOD = 0.05
     KEYPAD_3x4_KEYS = '1245'
     WAIT_FOR_EVER = -1
     EVDEV_DEVICE_NAME = 'ctrl-panel'
