@@ -433,13 +433,7 @@ class YoupiArm(DaisyChain):
         :param wait_cb: callback function which is called at the end of the motion
         :param timeout: the maximum motion duration
         """
-        m_settings = self.settings[self.MOTOR_HAND_ROT]
-        self.joints_move(*self.expand_parameters({
-            self.MOTOR_HAND_ROT: (
-                defs.Direction.FWD if angle > 0 else defs.Direction.REV,
-                m_settings.degrees_to_steps(angle)
-            )
-        }), wait=wait, wait_cb=wait_cb, timeout=timeout)
+        self.coupled_joints_move({self.MOTOR_HAND_ROT: angle}, wait=wait, wait_cb=wait_cb, timeout=timeout)
 
     def rotate_hand_to(self, angle, wait=True, wait_cb=None, timeout=TimeOuts.ROTATE_HAND):
         """ Rotates the hand to a given angle.
@@ -449,12 +443,7 @@ class YoupiArm(DaisyChain):
         :param wait_cb: callback function which is called at the end of the motion
         :param timeout: the maximum motion duration
         """
-        m_settings = self.settings[self.MOTOR_HAND_ROT]
-        self.joints_goto(*self.expand_parameters({
-            self.MOTOR_HAND_ROT: [
-                m_settings.degrees_to_steps(angle)
-            ]
-        }), wait=wait, wait_cb=wait_cb, timeout=timeout)
+        self.coupled_joints_goto({self.MOTOR_HAND_ROT: angle}, wait=wait, wait_cb=wait_cb, timeout=timeout)
 
     @staticmethod
     def _normalize_angles_parameter(angles):
@@ -605,6 +594,7 @@ class YoupiArm(DaisyChain):
     def joints_goto(self, angles, wait=True, wait_cb=None, coupled=False, timeout=TimeOuts.DEFAULT):
         """ Same as :py:meth:`joints_move` but for an absolute move
         """
+        self.logger.info('joints_goto(%s)', angles)
         angles = self._normalize_angles_parameter(angles)
 
         if coupled:
