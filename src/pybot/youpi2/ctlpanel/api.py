@@ -212,7 +212,7 @@ class ControlPanel(object):
 
         self.write_at('ERROR'.center(self.width)[:-1] + chr(CH_OK), line=1)
 
-        msg = str(e)
+        msg = str(e).strip().splitlines()[-1]
         self.write_at(msg[:20], line=3)
         self.write_at(msg[20:40], line=4)
 
