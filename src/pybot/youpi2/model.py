@@ -177,6 +177,12 @@ class YoupiArm(DaisyChain):
         SEEK_ORIGIN = 30
         ROTATE_HAND = 30
 
+    #: offset angles from the optical index to the true zero position
+    calibration_offsets = {
+        MOTOR_SHOULDER: -8,
+        MOTOR_ELBOW: 4
+    }
+
     @classmethod
     def motor_name(cls, motor_id):
         try:
@@ -422,6 +428,15 @@ class YoupiArm(DaisyChain):
 
         # if here, we could complete the whole sequence successfully
         self.hard_stop([motor])
+
+        # apply the optical index offset if any
+        try:
+            offset = self.calibration_offsets[motor]
+        except KeyError:
+            pass
+        else:
+            self.joints_move({motor: offset})
+
         self.reset_pos([motor])
 
     def rotate_hand(self, angle, wait=True, wait_cb=None, timeout=TimeOuts.ROTATE_HAND):
