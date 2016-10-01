@@ -177,8 +177,8 @@ class YoupiArm(DaisyChain):
         SEEK_ORIGIN = 30
         ROTATE_HAND = 30
 
-    #: offset angles from the optical index to the true zero position
-    calibration_offsets = {
+    #: offset angles from the optical index to the true zero mechanical position
+    index_offsets = {
         MOTOR_SHOULDER: -8,
         MOTOR_ELBOW: 4
     }
@@ -429,13 +429,14 @@ class YoupiArm(DaisyChain):
         # if here, we could complete the whole sequence successfully
         self.hard_stop([motor])
 
-        # apply the optical index offset if any
-        try:
-            offset = self.calibration_offsets[motor]
-        except KeyError:
-            pass
-        else:
-            self.joints_move({motor: offset})
+        # apply the compensation for the optical index offset, taking into account
+        # the coupling with parent joints if any
+        parent = self.JOINT_PARENTS[motor]
+        compensation = self.index_offsets.get(motor, 0)
+        while parent:
+            compensation += self.index_offsets.get(parent, 0)
+            parent = self.JOINT_PARENTS[parent]
+        self.joints_move({motor: compensation})
 
         self.reset_pos([motor])
 
