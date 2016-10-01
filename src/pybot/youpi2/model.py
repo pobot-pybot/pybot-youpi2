@@ -330,6 +330,10 @@ class YoupiArm(DaisyChain):
             )
         }), wait=wait, wait_cb=wait_cb, timeout=timeout)
 
+    def gripper_is_closed(self):
+        """ Tells if the gripper is currently closed or holding something """
+        return self.switch_is_closed[self.MOTOR_GRIPPER]
+
     def calibrate_gripper(self, wait=True, wait_cb=None, timeout=TimeOuts.CALIBRATE_GRIPPER):
         """ Calibrates the gripper.
 
