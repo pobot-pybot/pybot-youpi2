@@ -14,6 +14,7 @@ class Kinematics(LogMixin):
     L_GRIPPER = 150
     Z_SHOULDER = 280
     BASE_RADIUS = 100
+    X_OFFSET_FROM_ROTATION_AXIS = 105
 
     def __init__(self, *args, **kwargs):
         LogMixin.__init__(self, *args, **kwargs)
@@ -24,11 +25,11 @@ class Kinematics(LogMixin):
 
         The reference frame for the coordinates is defined as follows:
 
-        * XY plane at "table" level (i.e. 280 mm down the shoulder join according to Youpi
-          mechanical drawings)
+        * XY plane at "table" level (i.e. 280 mm down the shoulder joint)
         * X axis same as Youpi enclosure main axis
         * positive X away from front face (i.e. control panel one)
-        * Z axis same as the base rotation one
+        * X origin at front face level (more or less 105 mm from the base rotation axis)
+        * Z axis parallel to the base rotation one
         * positive Z upwards
         * Y axes oriented to form a direct frame, i.e. positive Y rightwards when facing the
            control panel
@@ -47,6 +48,7 @@ class Kinematics(LogMixin):
         :param float wrist_pitch: absolute pitch of the gripper
         :return: arm pose as the tuple of the joint angles
         :rtype: tuple
+        :raise ValueError: if the goal position cannot be reached (including the wrist pitch constraint)
         """
         input_parms_msg = 'goal: x=%f y=%f z=%f wrist_pitch=%f' % (x, y, z, wrist_pitch)
         self.log_debug(input_parms_msg)
@@ -56,9 +58,11 @@ class Kinematics(LogMixin):
             for m_id, settings in enumerate(YoupiArm.settings)
         ]
 
+        # move to shoulder related frame (translated to shoulder rotation axis center)
         z_rel = z - self.Z_SHOULDER
+        x_rel = x + self.X_OFFSET_FROM_ROTATION_AXIS
 
-        r = math.sqrt(x * x + y * y)
+        r = math.sqrt(x_rel * x_rel + y * y)
         self.log_debug('... r=%f' % r)
         base_angle = math.acos(x / r) * (1 if y > 0 else -1)
 
