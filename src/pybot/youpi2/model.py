@@ -4,12 +4,11 @@
 
 import time
 
+from pybot.core import log
 from pybot.dspin import defs, real_raspi, GPIO
 from pybot.dspin.core import DSPinSpiDev, CommandTimeOut
 from pybot.dspin.daisychain import DaisyChain
 from pybot.dspin.defs import Register
-
-from pybot.core import log
 
 __author__ = 'Eric Pascual'
 
@@ -63,7 +62,7 @@ class MotorSettings(object):
 class BaseMotorSettings(MotorSettings):
     """ Settings for the arm base rotation motor """
     GEAR_RATIO = 27
-    MIN_POS_DEG = -180
+    MIN_POS_DEG = -175
     MAX_POS_DEG = 175
 
     max_speed = 600
