@@ -64,7 +64,7 @@ class Kinematics(LogMixin):
 
         r = math.sqrt(x_rel * x_rel + y * y)
         self.log_debug('... r=%f' % r)
-        base_angle = math.acos(x / r) * (1 if y > 0 else -1)
+        base_angle = math.acos(x_rel / r) * (1 if y > 0 else -1)
 
         wrist_rd = math.radians(wrist_pitch)
         r_wrist = r - self.L_GRIPPER * math.cos(wrist_rd)
