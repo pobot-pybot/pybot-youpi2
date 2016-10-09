@@ -20,7 +20,9 @@ class Kinematics(LogMixin):
         LogMixin.__init__(self, *args, **kwargs)
 
     def ik(self, x, y, z, wrist_pitch=90):
-        """ Returns the pose corresponding to the goal gripper end cartesian position,
+        """ Inverse kinematics.
+
+        Returns the pose corresponding to the goal gripper end cartesian position,
         with the provided wrist absolute pitch.
 
         The reference frame for the coordinates is defined as follows:
@@ -106,3 +108,28 @@ class Kinematics(LogMixin):
 
         self.log_debug('>>> solution is valid')
         return q
+
+    def dk(self, pose):
+        """ Direct kinematics.
+
+        Returns the gripper end 3D coordinates corresponding to a pose.
+
+        Only the first 4 joints (i.e. base to wrist) are taken in account from the provided
+        pose. So this one can be reduced to them.
+
+        :param iterable pose: joint angles, in the sequence of motor ids
+        :return: 3D coordinates of the gripper end
+        :rtype: tuple
+        """
+        base, shoulder, elbow, wrist = (math.radians(a) for a in pose[:4])
+        r = self.L_SEGMENT * math.sin(shoulder) \
+            + self.L_SEGMENT * math.sin(shoulder + elbow) \
+            + self.L_GRIPPER * math.sin(shoulder + elbow + wrist)
+        z = self.Z_SHOULDER + \
+            self.L_SEGMENT * math.cos(shoulder) \
+            + self.L_SEGMENT * math.cos(shoulder + elbow) \
+            + self.L_GRIPPER * math.cos(shoulder + elbow + wrist)
+        y = -r * math.sin(base)
+        x = r * math.cos(base) - self.X_OFFSET_FROM_ROTATION_AXIS
+
+        return x, y, z

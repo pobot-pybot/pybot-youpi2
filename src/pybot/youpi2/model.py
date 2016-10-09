@@ -179,9 +179,9 @@ class YoupiArm(DaisyChain):
 
     #: offset angles from the optical index to the true zero mechanical position
     index_offsets = {
-        MOTOR_SHOULDER: -8,
-        MOTOR_ELBOW: 4,
-        MOTOR_HAND_ROT: 5
+        MOTOR_SHOULDER: -6,
+        MOTOR_ELBOW: 3,
+        MOTOR_HAND_ROT: 4
     }
 
     @classmethod
