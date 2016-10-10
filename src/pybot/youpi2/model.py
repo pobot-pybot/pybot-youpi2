@@ -107,12 +107,21 @@ class HandRotationMotorSettings(ArmJointMotorSettings):
 
 class GripperMotorSettings(MotorSettings):
     """ Settings for the arm gripper motor.
+
+    We try to make it turn as fast as possible to shorten
+    the opening/closing delays. In addition, there is no need
+    for a hold torque, since the mechanism uses a worm, and
+    is thus not reversible.
+
+    The closing speed is set lower than the opening one
+    to have enough torque for actuating the spring based mechanism
+    used for gripping detection.
     """
     GEAR_RATIO = 1
-    micro_steps = 1
+    micro_steps = 1     #: no need for micro-stepping since we are going to run at full speed
 
     max_speed = 2000
-    ovd_th = defs.OverCurrentThreshold.TH_750mA
+    ovd_th = defs.OverCurrentThreshold.TH_750mA     #: this motor is smaller that the other ones
     kval_hold = 0
     kval_acc = 0xff
     kval_dec = 0x4f
