@@ -308,16 +308,19 @@ class ControlPanel(object):
         self.center_text_at('...', 2)
         self.center_text_at("Please wait", 4)
 
-    def wait_for_key(self, valid=None, blink=False):
+    def wait_for_key(self, valid=None, blink=False, max_wait=None):
         """ Waits for a key to be pressed and returns it.
 
         In case of multiple presses (chord), only the first one is returned.
         Sorting sequence is the one defined by the `Keys.ALL` predefined set.
 
+        In case max_wait is used and no action is done by the user, returns None.
+
         :param valid: an optional set or list of keys, if the expected one must
                       belong to a specific subset. Single values are accepted
                       and converted to a set
         :param bool blink: if True, key(s) LED will blink instead of steady on
+        :param int max_wait: the maximum waiting delay (in seconds). If None, wait for ever
         :return: the pressed key
         :rtype: int
         :raises Interrupted: if an external signal has interrupted the wait
@@ -331,8 +334,13 @@ class ControlPanel(object):
             while not self._terminate_event.is_set() and self.get_keys():
                 time.sleep(self.KEYPAD_SCAN_PERIOD)
 
+            wait_until = (time.time() + max_wait) if max_wait else None
+
             self.clear_was_locked_status()
             while not self._terminate_event.is_set():
+                if wait_until and time.time() >= wait_until:
+                    return None
+
                 # update LEDs state if relevant
                 is_locked = self.is_locked()
                 if self.was_locked is None or self.was_locked != is_locked:
